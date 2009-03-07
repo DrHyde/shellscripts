@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# eg gitdiff -4 filename to see a diff from 4 versions back
+
 REV=$1
 FILE=$2
 
