@@ -1,0 +1,3 @@
+#!/bin/sh
+
+for i in `find . -name .git 2>/dev/null`; do cd $i/..;git pull;cd -;done
