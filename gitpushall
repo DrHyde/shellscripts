@@ -1,0 +1,8 @@
+#!/bin/sh
+
+for i in `find . -name .git 2>/dev/null`; do
+  cd $i/..
+  pwd
+  git push
+  cd ->/dev/null
+done
