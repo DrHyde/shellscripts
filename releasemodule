@@ -1,0 +1,17 @@
+#!/bin/sh
+
+perl Makefile.PL && make
+
+MODULE=`grep NAME.*=\> Makefile.PL|perl -pne "s/.*NAME/NAME/;s/NAME\s+=>\s+'//; s/'.*//"`
+
+VERSION=`perl -Mblib -e "use $MODULE;print \\$$MODULE::VERSION"`
+
+if grep $VERSION CHANGELOG |grep [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]; then
+  make test && \
+  make dist && \
+  echo if everything looks ok, ... && \
+  echo "  " git tag -a -m \"$MODULE release $VERSION\" release-$VERSION
+else
+  echo No date found in CHANGELOG, is it up to date?
+  exit 1
+fi
