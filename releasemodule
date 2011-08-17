@@ -10,7 +10,8 @@ if grep $VERSION CHANGELOG |grep [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]; the
   make test && \
   make dist && \
   echo if everything looks ok, ... && \
-  echo "  " git tag -a -m \"$MODULE release $VERSION\" release-$VERSION
+  echo "  " git tag -a -m \"$MODULE release $VERSION\" release-$VERSION && \
+  echo "  " git push --tags
 else
   echo No date found in CHANGELOG, is it up to date?
   exit 1
