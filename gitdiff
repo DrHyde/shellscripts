@@ -5,4 +5,4 @@
 REV=$1
 FILE=$2
 
-git diff `git log $FILE|grep ^commit|awk '{print $2}'|head -$(((-$REV)+1))|tail -1` -- $FILE | cat
+git diff `git log $FILE|grep ^commit|awk '{print $2}'|head -$(((-$REV)+1))|tail -1` -- $FILE
