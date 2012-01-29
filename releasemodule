@@ -4,7 +4,7 @@ perl Makefile.PL && make
 
 MODULE=`grep NAME.*=\> Makefile.PL|perl -pne "s/.*NAME/NAME/;s/NAME\s+=>\s+'//; s/'.*//"`
 
-VERSION=`perl -Mblib -e "use $MODULE;print \\$$MODULE::VERSION"`
+VERSION=`perl -Mblib -e "use $MODULE;print quotemeta(\\$$MODULE::VERSION)"`
 
 if grep $VERSION CHANGELOG |grep [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]; then
   make test && \
