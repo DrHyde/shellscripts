@@ -3,13 +3,14 @@
 GET="/usr/local/bin/lwp-request -m GET"
 R2E=/usr/bin/r2e
 
-HEAD -u -H 'User-Agent: get-rt.cpan-rss-feeds/0.1;david@cantrell.org.uk' http://rt.cpan.org/?user=${RTUSER}\&pass=${RTPASS}
-exit
+# HEAD -u -H 'User-Agent: get-rt.cpan-rss-feeds/0.1;david@cantrell.org.uk' http://rt.cpan.org/?user=${RTUSER}\&pass=${RTPASS}
+# exit
 
 for i in `$GET -H 'User-Agent: get-rt.cpan-rss-feeds/0.1;david@cantrell.org.uk' http://rt.cpan.org/?user=${RTUSER}\&pass=${RTPASS}|grep Dist/Display.html\?Status=Active|sed 's/.*Queue=//;s/".*//'`; do
-    if (! $R2E list|grep rt.cpan.org.*$i>/dev/null) ; then
-        FEEDURL="https://rt.cpan.org/Search/Results.rdf?user=$RTUSER;pass=$RTPASS;Query=Queue%20%3D%20'$i'%20AND%20(%20Status%20%3D%20'new'%20OR%20Status%20%3D%20'open'%20OR%20Status%20%3D%20'stalled'%20OR%20Status%20%3D%20'patched'%20)"
-        echo Adding RSS feed for $i on rt.cpan.org
-        $R2E add "$FEEDURL"
-    fi
+    echo $i
+    # if (! $R2E list|grep rt.cpan.org.*$i>/dev/null) ; then
+    #     FEEDURL="https://rt.cpan.org/Search/Results.rdf?user=$RTUSER;pass=$RTPASS;Query=Queue%20%3D%20'$i'%20AND%20(%20Status%20%3D%20'new'%20OR%20Status%20%3D%20'open'%20OR%20Status%20%3D%20'stalled'%20OR%20Status%20%3D%20'patched'%20)"
+    #     echo Adding RSS feed for $i on rt.cpan.org
+    #     $R2E add "$FEEDURL"
+    # fi
 done
