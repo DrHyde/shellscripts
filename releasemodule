@@ -6,8 +6,11 @@ MODULE=`grep NAME.*=\> Makefile.PL|perl -pne "s/.*NAME/NAME/;s/NAME\s+=>\s+'//; 
 
 VERSION=`perl -Mblib -e "use $MODULE;print quotemeta(\\$$MODULE::VERSION)"`
 
+export AUTHOR_TESTING=1
+
 if grep $VERSION CHANGELOG |grep [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]; then
   make test && \
+  PERL5OPT=-MDevel::Hide=Test::Pod::Coverage,Test::Pod make test && \
   make dist && \
   echo if everything looks ok, ... && \
   echo "  " git tag -a -m \"$MODULE release $VERSION\" release-$VERSION |sed s/\\\\././g && \
