@@ -1,0 +1,20 @@
+#!/bin/sh
+
+MY_NAME=`basename $0`
+
+case $MY_NAME in
+    dropbox-start)
+        open -a Dropbox
+    ;;
+    dropbox-stop)
+        osascript -e 'tell application "Dropbox" to quit'
+    ;;
+    dropbox-status)
+        ps auxww|grep -v grep|grep MacOS/Dropbox >/dev/null 2>&1
+        if [ $? == 0 ]; then
+            echo Running
+        else
+            echo Not running
+        fi
+    ;;
+esac
