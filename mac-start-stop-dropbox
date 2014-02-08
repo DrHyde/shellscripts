@@ -1,20 +1,74 @@
 #!/bin/sh
 
-MY_NAME=`basename $0`
+# $ dropbox-status
+# $ dropbox-start
+# $ dropbox-stop
+# $ dropbox-stop --restart-in 5 seconds
+# $ dropbox-stop --restart-in 10 minutes
+# $ dropbox-stop --restart-in 3 hours
+# $ dropbox-stop --restart-in 1 hour
 
-case $MY_NAME in
-    dropbox-start)
-        open -a Dropbox
-    ;;
-    dropbox-stop)
-        osascript -e 'tell application "Dropbox" to quit'
-    ;;
-    dropbox-status)
-        ps auxww|grep -v grep|grep MacOS/Dropbox >/dev/null 2>&1
-        if [ $? == 0 ]; then
-            echo Running
-        else
-            echo Not running
-        fi
-    ;;
-esac
+function main() {
+    case `basename $0` in
+        dropbox-start)
+            start
+        ;;
+        dropbox-stop)
+            stop "$@"
+        ;;
+        dropbox-status)
+            status
+        ;;
+    esac
+}
+
+function start() {
+    open -a Dropbox
+}
+
+function stop() {
+    if [ "$1" == "--restart-in" ]; then
+        shift
+        COUNT=$1
+        case $2 in
+            second)
+                MULTIPLIER=1
+            ;;
+            seconds)
+                MULTIPLIER=1
+            ;;
+            minute)
+                MULTIPLIER=60
+            ;;
+            minutes)
+                MULTIPLIER=60
+            ;;
+            hour)
+                MULTIPLIER=3600
+            ;;
+            hours)
+                MULTIPLIER=3600
+            ;;
+        esac
+        SECONDS=$(( $COUNT * $MULTIPLIER ))
+        echo restarting in "$@"
+        (
+            sleep $SECONDS
+            start
+        ) &
+        disown %+
+    fi
+
+    osascript -e 'tell application "Dropbox" to quit'
+}
+
+function status() {
+    ps auxww|grep -v grep|grep MacOS/Dropbox >/dev/null 2>&1
+    if [ $? == 0 ]; then
+        echo Running
+    else
+        echo Not running
+    fi
+}
+
+main "$@"
