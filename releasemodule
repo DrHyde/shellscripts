@@ -8,6 +8,11 @@ VERSION=`perl -Mblib -e "use $MODULE;print quotemeta(\\$$MODULE::VERSION)"`
 
 export AUTHOR_TESTING=1
 
+if perl -MJSON::Parse=json_file_to_perl -e '$p=json_file_to_perl("MYMETA.json");exit($p->{resources}->{bugtracker}->{web} eq $p->{resources}->{repository}->{url}."/issues" ? 1 : 0)'; then
+    echo bugtracker and repository don\'t look right in meta-data
+    exit 1
+fi
+
 if grep $VERSION CHANGELOG |grep [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]; then
   make test && \
   PERL5OPT=-MDevel::Hide=Test::Pod::Coverage,Test::Pod make test && \
