@@ -2,6 +2,8 @@
 
 MAKEFILEPL=Makefile.PL
 MAKE=make
+
+export RELEASE_TESTING=1
 export PERL_USE_UNSAFE_INC=0
 
 if [ -e Build.PL ]; then
