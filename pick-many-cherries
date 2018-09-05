@@ -1,0 +1,19 @@
+#!/bin/bash
+
+SOURCE=$1
+NUM=$2
+
+if [ "$SOURCE" == "-h" -o "$SOURCE" == "" ]; then
+    echo
+    echo Usage: pick-many-cherries SOURCE COUNT
+    echo
+    echo Cherry-pick the last COUNT commits from SOURCE in chronological order.
+    echo
+    echo There is NO ERROR CHECKING. Don\'t use it if there are merge-commits
+    echo in the way.
+    echo
+    exit
+fi
+
+for i in `git log $SOURCE |grep ^commit |head -$NUM |awk '{print $2}' |tac`; do git cherry-pick $i;done
+
