@@ -5,6 +5,7 @@ MAKE=make
 
 export RELEASE_TESTING=1
 export PERL_USE_UNSAFE_INC=0
+export DEVEL_HIDE_VERBOSE=0
 
 if [ -e Build.PL ]; then
   MAKEFILEPL=Build.PL
