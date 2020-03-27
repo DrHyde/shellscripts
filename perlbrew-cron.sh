@@ -38,4 +38,4 @@ fi
 
 source $BASHRC
 
-exec "$@"
+exec perlbrew exec "$@"
