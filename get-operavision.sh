@@ -2,18 +2,16 @@
 
 set -eu -o pipefail
 
+[[ "$1" =~ ^http.* ]] && echo "Provide a Youtube ID, not a URL" && exit 1
+
 renice -n 19 -p $$
 
-OPERA_TEMPDIR="get-opera-$$"
+SUBSLANG="$(youtube-dl --list-subs "$1"|grep ^en|tail -1|cut -d ' ' -f1)"
 
-mkdir "$OPERA_TEMPDIR"
-(
-    cd "$OPERA_TEMPDIR"
-    youtube-dl -f 136+140 --sub-lang en-GB --write-sub "$@"
-    MP4="$(ls ./*.mp4)"
-    VTT="$(ls ./*.vtt)"
-    mv "$MP4" input.mp4
-    ffmpeg -i input.mp4 -vf subtitles="$VTT" "$MP4"
-    mv "$MP4" ..
-)
-rm -rf "$OPERA_TEMPDIR"
+youtube-dl -f 136+140 --sub-lang $SUBSLANG --write-sub "$1"
+MP4="$(ls ./*$1*.mp4)"
+VTT="$(ls ./*$1*.vtt)"
+mv "$MP4" $$-input.mp4
+mv "$VTT" $$-input.vtt
+ffmpeg -i $$-input.mp4 -vf subtitles=$$-input.vtt "$MP4"
+rm $$-input.{vtt,mp4}
