@@ -38,7 +38,7 @@ mv "$VTT" $$-input.vtt
 
 # and here beginneth the subtitle job
 time -p wait_in_queue subtitle
-ffmpeg -loglevel repeat+info -i $$-input.mp4 -vf subtitles=$$-input.vtt "$MP4"
+ffmpeg -loglevel quiet -stats -i $$-input.mp4 -vf subtitles=$$-input.vtt -c:a copy -crf 18 -preset slower "$MP4"
 unlock_queue subtitle
 
 # clean up
