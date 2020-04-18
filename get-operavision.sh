@@ -12,7 +12,7 @@ wait_in_queue() {
     mkdir "$HOME/.get-operavision" 2>/dev/null || true
     while [[ -f "$queue_file" ]]; do
         kill -0 $(cat "$queue_file") 2>/dev/null || break
-        sleep 1
+        sleep 60
     done
     echo $$ > "$queue_file"
     echo Leaving queue
