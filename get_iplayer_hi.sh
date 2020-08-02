@@ -1,3 +1,3 @@
 #!/bin/sh
 
-get_iplayer --force --fps25 0 --tvmode best "$@"
+get_iplayer --fps25 0 --tvmode best "$@"
