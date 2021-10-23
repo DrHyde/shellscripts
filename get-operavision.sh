@@ -6,9 +6,9 @@ set -eu -o pipefail
 
 renice -n 19 -p $$
 
-SUBSLANG="$(youtube-dl --list-subs -- "$1"|grep ^en|tail -1|cut -d ' ' -f1)"
+SUBSLANG="$(yt-dlp --list-subs -- "$1"|grep ^en|tail -1|cut -d ' ' -f1)"
 
-youtube-dl -f 136+140 --sub-lang $SUBSLANG --write-sub -- "$1"
+yt-dlp -f 136+140 --sub-lang $SUBSLANG --write-sub -- "$1"
 
 MP4="$(ls ./*$1*.mp4)"
 VTT="$(ls ./*$1*.vtt)"
