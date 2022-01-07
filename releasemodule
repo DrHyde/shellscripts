@@ -30,6 +30,10 @@ if [ -e Changes ]; then
 fi
 
 if grep ^$VERSION $CHANGELOG |grep [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$; then
+  if [ "$MODULE" == "Test::Differences" ]; then
+    PERL5OPT=-MDevel::Hide=Unknown::Values $MAKE test || exit 1;
+  fi
+
   $MAKE test && \
   PERL5OPT=-MDevel::Hide=Test::Pod::Coverage,Test::Pod $MAKE test && \
   $MAKE dist && \
@@ -40,6 +44,6 @@ if grep ^$VERSION $CHANGELOG |grep [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$; 
   echo "  " \(cd data-files\;git tag -a -m \"$MODULE release $VERSION\" release-$VERSION\) |sed s/\\\\././g && \
   echo "  " \(cd data-files\;git push --tags\)
 else
-  echo No date found in \'$CHANGELOG\' file, of format doesn\'t look like CPAN::Changes::Spec. Is it up to date?
+  echo No date found in \'$CHANGELOG\' file, or format doesn\'t look like CPAN::Changes::Spec. Is it up to date?
   exit 1
 fi
