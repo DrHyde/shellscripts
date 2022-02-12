@@ -6,17 +6,19 @@ set -eu -o pipefail
 
 renice -n 19 -p $$
 
-SUBSLANG="$(yt-dlp --list-subs -- "$1"|grep ^en|tail -1|cut -d ' ' -f1)"
+SUBSLANG="$(yt-dlp --list-subs -- "$1"|grep ^en|tail -1|cut -d ' ' -f1)" || true
 
-yt-dlp -f 136+140 --sub-lang $SUBSLANG --write-sub -- "$1"
+if [[ "$SUBSLANG" != "" ]]; then
+    SUBSLANG="--sub-lang $SUBSLANG --write-sub"
+fi
 
-MP4="$(ls ./*$1*.mp4)"
-VTT="$(ls ./*$1*.vtt)"
-mv "$MP4" $$-input.mp4
-mv "$VTT" $$-input.vtt
+yt-dlp -f 136+140 $SUBSLANG -- "$1"
 
-# and here beginneth the subtitle job
-ffmpeg -loglevel quiet -stats -i $$-input.mp4 -i $$-input.vtt -c copy -c:s mov_text "$MP4"
-
-# clean up
-rm $$-input.{vtt,mp4}
+VTT="$(ls ./*$1*.vtt 2>/dev/null)" || true
+if [[ $VTT != "" ]]; then
+    MP4="$(ls ./*$1*.mp4)"
+    mv "$MP4" $$-input.mp4
+    mv "$VTT" $$-input.vtt
+    ffmpeg -loglevel quiet -stats -i $$-input.mp4 -i $$-input.vtt -c copy -c:s mov_text "$MP4"
+    rm $$-input.{vtt,mp4}
+fi
