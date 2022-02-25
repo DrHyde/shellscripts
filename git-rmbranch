@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+((!$#)) && echo No branch name, command ignored! && exit 1
+
+git branch -D "$1"
+git push --delete origin "$1"
