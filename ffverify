@@ -6,8 +6,21 @@ green='\e[1;32m'
 blue='\e[1;34m'
 NC='\e[0m'       # no colour
 
+exitcode=0
 for i in "$@"; do
     printf "$i ... "
-    (ffmpeg -v error -i "$i" -map 0:1 -f null - 2>/dev/null && printf "$green") || printf "${red}not "
+    ffmpeg -v error -i "$i" -map 0:1 -f null - 2>/dev/null
+    err=$?
+    if [[ $err == 255 ]]; then # ffmpeg died on signal, eg C-c
+        printf "\n"
+        exit 1
+    elif [[ $err != 0 ]]; then
+        exitcode=1
+        printf "${red}not "
+    else
+       printf "$green"
+    fi
     printf "ok$NC\n"
 done
+
+exit $exitcode
