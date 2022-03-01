@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+red='\e[1;31m'   # bold red
+yellow='\e[0;33m'
+green='\e[1;32m'
+blue='\e[1;34m'
+NC='\e[0m'       # no colour
+
+for i in "$@"; do
+    printf "$i ... "
+    (ffmpeg -v error -i "$i" -map 0:1 -f null - 2>/dev/null && printf "$green") || printf "${red}not "
+    printf "ok$NC\n"
+done
