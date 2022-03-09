@@ -3,11 +3,12 @@
 TEMPDIR=50-2-25.temp.$$
 mkdir $TEMPDIR
 
+echo Checking files
 for file in "$@"; do
-    if [[ $(( $(ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of default=noprint_wrappers=1:nokey=1 "$file") )) -ne 50 ]]; then
-        echo "$file isn't 50fps, ignoring"
+    if [[ $( fps "$file" ) -ne 50 ]]; then
+        echo "... $file isn't 50fps, ignoring"
     else
-        echo "$file is 50fps"
+        echo "... $file is 50fps"
         cp "$file" $TEMPDIR/
     fi
 done
