@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -eu -o pipefail
+
+MP4="$1"; shift
+VTT="$1"; shift
+
+mv "$MP4" $$-input.mp4
+
+ffmpeg -loglevel quiet -stats -i $$-input.mp4 -i "$VTT" -c copy -c:s mov_text "$MP4"
+rm $$-input.mp4

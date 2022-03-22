@@ -17,8 +17,6 @@ yt-dlp -f 136+140 $SUBSLANG -- "$1"
 VTT="$(ls ./*$1*.vtt 2>/dev/null)" || true
 if [[ $VTT != "" ]]; then
     MP4="$(ls ./*$1*.mp4)"
-    mv "$MP4" $$-input.mp4
-    mv "$VTT" $$-input.vtt
-    ffmpeg -loglevel quiet -stats -i $$-input.mp4 -i $$-input.vtt -c copy -c:s mov_text "$MP4"
-    rm $$-input.{vtt,mp4}
+    ffaddsubs "$MP4" "$VTT"
+    rm "$VTT"
 fi
