@@ -3,6 +3,11 @@
 for file in "$@"; do
     (
         ffverify -q "$file" &&
-        echo $(( $(ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of default=noprint_wrappers=1:nokey=1 "$file") ))
+        echo -n $(( $(ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of default=noprint_wrappers=1:nokey=1 "$file") )) && (
+            if [ $# -ne 1 ]; then
+                echo -n : $file
+            fi
+        ) &&
+        echo
     ) || echo 0
 done
