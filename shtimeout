@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+# Based on http://www.bashcookbook.com/bashinfo/source/bash-4.0/examples/scripts/timeout3
+
+scriptName="${0##*/}"
+
+function printUsage() {
+    cat <<EOF
+
+Synopsis
+    $scriptName timeout command
+
+    Execute a command with a time-out.
+
+    Upon time-out expiration SIGTERM (15) is sent to the process. If SIGTERM
+    signal is blocked, then the subsequent SIGKILL (9) terminates it.
+
+    timeout
+        Integer number of seconds to wait for command completion.
+EOF
+}
+
+timeout=$1
+shift
+
+# $# should be at least 1 (the command to execute), however it may be strictly
+# greater than 1 if the command itself has options.
+if (($# == 0)); then
+    printUsage
+    exit 1
+fi
+
+(
+    # wait $timeout seconds or until the process goes away,
+    # polling every second to see if it still exists
+    while ((timeout > 0)); do
+        sleep 1
+        kill -0 $$ || exit 0
+        ((timeout -= 1))
+    done
+
+    kill -s SIGTERM $$ && kill -0 $$ || exit 0
+    sleep 1
+    kill -s SIGKILL $$
+) 2> /dev/null &
+
+exec "$@"
