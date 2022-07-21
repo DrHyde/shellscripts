@@ -3,6 +3,11 @@
 TEMPDIR=50-2-25.temp.$$
 mkdir $TEMPDIR
 
+if [ "$1" = "--onecpu" ]; then
+    shift
+    ONECPU=1
+fi
+
 echo Checking files
 for file in "$@"; do
     if [[ $( fps "$file" ) -ne 50 ]]; then
@@ -21,7 +26,7 @@ done
         echo Converting $FILES files to 25fps
         USECPUS=1
         AVAILABLECPUS=$(( $(nproc) / 2 ))
-        if [[ $AVAILABLECPUS -eq 0 ]]; then
+        if [[ $AVAILABLECPUS -eq 0 ]] || [[ $ONECPU -eq 1 ]]; then
             AVAILABLECPUS=1
         elif [[ $AVAILABLECPUS -gt $FILES ]]; then
             USECPUS=$(( $AVAILABLECPUS / $FILES ))
