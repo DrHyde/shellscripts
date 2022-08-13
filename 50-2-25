@@ -34,11 +34,11 @@ done
         if [[ $USECPUS -eq 0 ]]; then
             USECPUS=1
         fi
-        echo ... found $AVAILABLECPUS CPUs, running at most that many jobs in parallel    
+        echo ... found $AVAILABLECPUS CPUs, running at most that many jobs in parallel
         echo ... using $USECPUS CPUs per file
 
         rotator &
-        (ls "$@" 2>/dev/null) | parallel -j $AVAILABLECPUS ffmpeg -y -hide_banner -loglevel error -cpucount $USECPUS -i {} -filter:v fps=25 ../{}
+        (ls "$@" 2>/dev/null) | parallel -j $AVAILABLECPUS ffmpeg -y -hide_banner -loglevel error -threads $USECPUS -i {} -filter:v fps=25 ../{}
         kill %1
         sleep 1 # wait for kill to work
         echo Done
