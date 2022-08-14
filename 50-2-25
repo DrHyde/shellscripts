@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
 
-TEMPDIR=50-2-25.temp.$$
-mkdir $TEMPDIR
-
 if [ "$1" = "--onecpu" ]; then
     shift
     ONECPU=1
+elif [ "$1" = "--do_one" ]; then
+    TEMPDIR="$2"
+    USECPUS="$3"
+    FILE="$4"
+    ffmpeg -y -hide_banner -loglevel error -threads $USECPUS -i "$FILE" -filter:v fps=25 "$TEMPDIR/$FILE" && \
+        mv "$TEMPDIR/$FILE" "$FILE"
+    exit
 fi
+
+TO_PROCESS=()
+TEMPDIR=50-2-25.temp.$$
+mkdir $TEMPDIR
 
 echo Checking files
 for file in "$@"; do
@@ -14,14 +22,12 @@ for file in "$@"; do
         echo "... $file isn't 50fps, ignoring"
     else
         echo "... $file is 50fps"
-        cp "$file" $TEMPDIR/
+        TO_PROCESS+=("$file")
     fi
 done
 
 (
-    cd $TEMPDIR
-
-    FILES=$( (ls "$@" 2>/dev/null) |wc -l)
+    FILES=${#TO_PROCESS[@]}
     if [[ $FILES -ne 0 ]]; then
         echo Converting $FILES files to 25fps
         USECPUS=1
@@ -38,7 +44,11 @@ done
         echo ... using $USECPUS CPUs per file
 
         rotator &
-        (ls "$@" 2>/dev/null) | parallel -j $AVAILABLECPUS ffmpeg -y -hide_banner -loglevel error -threads $USECPUS -i {} -filter:v fps=25 ../{}
+        (
+            for i in ${!TO_PROCESS[@]}; do
+                echo ${TO_PROCESS[$i]}
+            done
+        ) | parallel -j $AVAILABLECPUS "$0" --do_one "$TEMPDIR" $USECPUS "{}"
         kill %1
         sleep 1 # wait for kill to work
         echo Done
