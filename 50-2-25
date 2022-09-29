@@ -7,7 +7,7 @@ elif [ "$1" = "--do_one" ]; then
     TEMPDIR="$2"
     USECPUS="$3"
     FILE="$4"
-    ffmpeg -y -hide_banner -loglevel error -threads $USECPUS -i "$FILE" -filter:v fps=25 "$TEMPDIR/$FILE" && \
+    ffmpeg -y -hide_banner -loglevel error -threads $USECPUS -i "$FILE" -scodec copy -filter:v fps=25 "$TEMPDIR/$FILE" && \
         mv "$TEMPDIR/$FILE" "$FILE"
     exit
 fi
