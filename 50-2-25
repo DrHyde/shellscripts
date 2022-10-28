@@ -6,8 +6,8 @@ mkdir $TEMPDIR
 
 echo Checking files
 for file in "$@"; do
-    if [[ $( fps "$file" ) -ne 50 ]]; then
-        echo "... $file isn't 50fps, ignoring"
+    if [[ $( ffverify -q "$file" && fps "$file" ) -ne 50 ]]; then
+        echo "... $file isn't well-formed 50fps, ignoring"
     else
         echo "... $file is 50fps"
         TO_PROCESS+=("$file")
