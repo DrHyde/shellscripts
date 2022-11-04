@@ -19,7 +19,7 @@ rotator &
 for i in ${!TO_PROCESS[@]}; do
     FILE=${TO_PROCESS[$i]}
     TEMP_FILE="$TEMPDIR/$(basename "$FILE")"
-    ffmpeg -y -hide_banner -loglevel error -threads 1 -i "$FILE" -scodec copy -filter:v fps=25 "$TEMP_FILE"
+    nice -n 19 ffmpeg -y -hide_banner -loglevel error -threads 1 -i "$FILE" -scodec copy -filter:v fps=25 "$TEMP_FILE"
     mv "$TEMP_FILE" "$FILE"
 done
 
