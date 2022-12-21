@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+for file in "$@"; do
+    (
+        file "$file"|grep "ISO Media.*Audio" && \
+        ffverify -q "$file"  && \
+        ffmpeg -v error -i "$file" "$file.mp3" && \
+        rm "$file" \
+    ) \
+    || echo "... $file doesn't look like an m4a"
+done
