@@ -41,8 +41,9 @@ if grep ^$VERSION $CHANGELOG |grep [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$; 
   echo "  " git tag -a -m \"$MODULE release $VERSION\" release-$VERSION |sed s/\\\\././g && \
   echo "  " git push --tags && \
   pwd|grep -q Number-Phone$ && \
-  echo "  " \(cd data-files\;git tag -a -m \"$MODULE release $VERSION\" release-$VERSION\) |sed s/\\\\././g && \
-  echo "  " \(cd data-files\;git push --tags\)
+  echo "  " \(cd data-files\;git tag -a -m \"$MODULE release $VERSION\" release-$VERSION\) |sed s/\\\\././g
+  # this repo no longer has a remote
+  # echo "  " \(cd data-files\;git push --tags\)
 else
   echo No date found in \'$CHANGELOG\' file, or format doesn\'t look like CPAN::Changes::Spec. Is it up to date?
   exit 1
