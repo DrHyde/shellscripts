@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+this_scripts_dir=$(cd "$(dirname "$0")";pwd)
+
+# remove this_scripts_dir from the path so we can find the real killall if it exists
+PATH=:$PATH:
+PATH=${PATH//:$this_scripts_dir:/:}
+PATH=${PATH#:}
+export PATH=${PATH%:}
+
+real_killall="$(which killall 2>/dev/null)"
+
+if [[ "$real_killall" != "" ]] && [[ $OSTYPE != solaris* ]]; then
+    killall "$@"
+else
+    for pname in "$@"; do
+        kill $(pgrep -U "$USER" "$pname")
+    done
+fi
