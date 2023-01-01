@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 
-eval "$(cat $HOME/bin/lib/stdbashlib)"
+eval "$(cat "$HOME/bin/lib/stdbashlib")"
 
 this_scripts_dir="$(script_dir)"
 
-# remove this_scripts_dir from the path so we can find the real killall if it exists
-PATH=:$PATH:
-PATH=${PATH//:$this_scripts_dir:/:}
-PATH=${PATH#:}
-export PATH=${PATH%:}
+remove_from_path "$this_scripts_dir"
 
 real_killall="$(which killall 2>/dev/null)"
 

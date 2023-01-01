@@ -9,3 +9,17 @@ function script_dir (
     cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1
     pwd
 )
+
+STDLIB_ORIG_PATH="$PATH"
+
+function remove_from_path {
+    local dir=$1
+    PATH=:$PATH:
+    PATH=${PATH//:$dir:/:}
+    PATH=${PATH#:}
+    export PATH=${PATH%:}
+}
+
+function restore_original_path {
+    export PATH="$STDLIB_ORIG_PATH"
+}
