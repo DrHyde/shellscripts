@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-this_scripts_dir=$(cd "$(dirname "$0")";pwd)
+eval "$(cat $HOME/bin/lib/stdbashlib)"
+
+this_scripts_dir="$(script_dir)"
 
 # remove this_scripts_dir from the path so we can find the real killall if it exists
 PATH=:$PATH:

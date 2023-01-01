@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# This contains a bunch of useful functions for use in scripts. For Reasons,
+# it should be pulled into your script not using `source` but thus:
+#
+#   eval "$(cat $HOME/bin/lib/stdbashlib)"
+
+function script_dir (
+    cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1
+    pwd
+)
