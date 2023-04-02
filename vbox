@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+
+main () (
+    VERB="$1"
+    shift
+
+    if [ "$VERB" == "list" ]; then
+        list "$@"
+    elif [ "$VERB" == "start" ]; then
+        start "$@"
+    elif [ "$VERB" == "stop" ]; then
+        stop "$@"
+    elif [ "$VERB" == "bounce" ]; then
+        bounce "$@"
+    else
+        echo vbox list\|start\|stop\|bounce
+    fi
+)
+
+bounce () (
+    MACHINE="$1"
+    shift
+    if [ "$MACHINE" == "all" ]; then
+        for candidate in  $( list up ); do
+            bounce "$candidate"
+        done
+    elif [ "$MACHINE" == "GCA-XP" ]; then
+        echo no, not bouncing $MACHINE
+    elif [ -z "$MACHINE" ]; then
+        echo vbox bounce all\|\{list, of machines\}
+    else
+        for candidate in "$MACHINE" "$@"; do
+            if grep ^$candidate\$ <( list up ) >/dev/null 2>/dev/null ; then
+                stop "$candidate"
+                while grep "^$candidate$" <( list started ) >/dev/null 2>&1; do
+                    sleep 5
+                    echo ... waiting
+                done
+                sleep 5
+                start "$candidate"
+            else
+                echo What\'s $candidate?
+            fi
+        done
+    fi
+)
+
+stop () (
+    MACHINE="$1"
+    shift
+    if [ "$MACHINE" == "all" ]; then
+        for candidate in  $( list up ); do
+            stop "$candidate"
+        done
+    elif [ -z "$MACHINE" ]; then
+        echo vbox stop all\|\{list, of machines\}
+    elif [ "$MACHINE" == "GCA-XP" ]; then
+        echo no, not stopping $MACHINE
+    else
+        for candidate in "$MACHINE" "$@"; do
+            if grep ^$candidate\$ <( list up ) >/dev/null 2>/dev/null ; then
+                echo stopping $candidate
+                VBoxManage controlvm "$candidate" acpipowerbutton >/dev/null 2>/dev/null
+            else
+                echo What\'s $candidate?
+            fi
+        done
+    fi
+)
+
+start () (
+    MACHINE="$1"
+    shift
+    if [ "$MACHINE" == "all" ]; then
+        for candidate in  $( list stopped ); do
+            start "$candidate"
+        done
+    elif [ -z "$MACHINE" ]; then
+        echo vbox start all\|\{list, of machines\}
+    elif [ "$MACHINE" == "GCA-XP" ]; then
+        echo no, not starting $MACHINE
+    else
+        for candidate in "$MACHINE" "$@"; do
+            if grep ^$candidate\$ <( list stopped ) >/dev/null 2>/dev/null ; then
+                echo starting $candidate
+                VBoxManage startvm $candidate >/dev/null 2>/dev/null
+            else
+                echo What\'s $candidate?
+            fi
+        done
+    fi
+)
+
+listall () (
+    VBoxManage list vms |awk '{print $1}'|sed 's/"//'g
+)
+
+liststarted () (
+    VBoxManage list runningvms |awk '{print $1}'|sed 's/"//'g
+)
+
+listup () (
+    for candidate in $( liststarted ); do
+        ping -c1 $candidate >/dev/null 2>/dev/null && echo $candidate
+    done
+)
+
+list () (
+    TYPE="$1"
+    shift
+    if [ "$TYPE" == "started" ]; then
+        liststarted
+    elif [ "$TYPE" == "all" ]; then
+        listall
+    elif [ "$TYPE" == "up" ]; then
+        listup
+    elif [ "$TYPE" == "stopped" ]; then
+        grep -v -f <( liststarted ) <( listall )
+    else
+        echo vbox list all\|started\|up\|stopped
+    fi
+)
+
+main "$@"
