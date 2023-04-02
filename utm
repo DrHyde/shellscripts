@@ -13,7 +13,7 @@ main () (
     elif [ "$VERB" == "bounce" ]; then
         bounce "$@"
     else
-        echo vbox list\|start\|stop\|bounce
+        echo utm list\|start\|stop\|bounce
     fi
 )
 
@@ -24,10 +24,8 @@ bounce () (
         for candidate in  $( list up ); do
             bounce "$candidate"
         done
-    elif [ "$MACHINE" == "GCA-XP" ]; then
-        echo no, not bouncing $MACHINE
     elif [ -z "$MACHINE" ]; then
-        echo vbox bounce all\|\{list of machines\}
+        echo utm bounce all\|\{list of machines\}
     else
         for candidate in "$MACHINE" "$@"; do
             if grep ^$candidate\$ <( list up ) >/dev/null 2>/dev/null ; then
@@ -53,14 +51,13 @@ stop () (
             stop "$candidate"
         done
     elif [ -z "$MACHINE" ]; then
-        echo vbox stop all\|\{list of machines\}
-    elif [ "$MACHINE" == "GCA-XP" ]; then
-        echo no, not stopping $MACHINE
+        echo utm stop all\|\{list of machines\}
     else
         for candidate in "$MACHINE" "$@"; do
             if grep ^$candidate\$ <( list up ) >/dev/null 2>/dev/null ; then
                 echo stopping $candidate
-                VBoxManage controlvm "$candidate" acpipowerbutton >/dev/null 2>/dev/null
+                utmctl stop "$candidate" --request >/dev/null 2>/dev/null
+                sleep 5
             else
                 echo What\'s $candidate?
             fi
@@ -76,14 +73,16 @@ start () (
             start "$candidate"
         done
     elif [ -z "$MACHINE" ]; then
-        echo vbox start all\|\{list of machines\}
-    elif [ "$MACHINE" == "GCA-XP" ]; then
-        echo no, not starting $MACHINE
+        echo utm start all\|\{list of machines\}
     else
         for candidate in "$MACHINE" "$@"; do
             if grep ^$candidate\$ <( list stopped ) >/dev/null 2>/dev/null ; then
                 echo starting $candidate
-                VBoxManage startvm $candidate >/dev/null 2>/dev/null
+                utmctl start $candidate >/dev/null 2>/dev/null
+                while ! ping -c1 "$candidate" >/dev/null 2>&1; do
+                    echo ... waiting
+                    sleep 5
+                done
             else
                 echo What\'s $candidate?
             fi
@@ -91,12 +90,16 @@ start () (
     fi
 )
 
+list_complete() (
+    utmctl list |grep -v UUID
+)
+
 listall () (
-    VBoxManage list vms |awk '{print $1}'|sed 's/"//'g
+    list_complete |awk '{print $3}'
 )
 
 liststarted () (
-    VBoxManage list runningvms |awk '{print $1}'|sed 's/"//'g
+    list_complete |awk '$2 ~ /started/ { print $3; next }'
 )
 
 listup () (
@@ -117,7 +120,7 @@ list () (
     elif [ "$TYPE" == "stopped" ]; then
         grep -v -f <( liststarted ) <( listall )
     else
-        echo vbox list all\|started\|up\|stopped
+        echo utm list all\|started\|up\|stopped
     fi
 )
 
