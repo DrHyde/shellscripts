@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 main () (
-    ps aux|grep UTM.app/Contents/MacOS/UTM > /dev/null 2&>1 && (
+    ps aux|grep UTM.app/Contents/MacOS/UTM > /dev/null 2>&1 || (
         echo Need to start UTM
         open -a UTM
         sleep 5
