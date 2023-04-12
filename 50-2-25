@@ -27,7 +27,7 @@ rotator &
 for i in ${!TO_PROCESS[@]}; do
     FILE=${TO_PROCESS[$i]}
     TEMP_FILE="$TEMPDIR/$(basename "$FILE")"
-    cpulimit -l $CPULIMIT ffmpeg -y -hide_banner -loglevel error -threads 1 -i "$FILE" -scodec copy -filter:v fps=25 "$TEMP_FILE"
+    cpulimit -l $CPULIMIT ffmpeg -y -hide_banner -loglevel error -threads 1 -i "$FILE" -scodec copy -filter:v fps=25 "$TEMP_FILE" || exit 1
     touch -r "$FILE" "$TEMP_FILE" && \
     mv "$TEMP_FILE" "$FILE"
 done
