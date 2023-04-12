@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+CPULIMIT=100
+
+if [ "$1" == "--cpulimit" ]; then
+    CPULIMIT=$2
+    shift
+    shift
+fi
+
 TO_PROCESS=()
 TEMPDIR=50-2-25.temp.$$
 mkdir $TEMPDIR
@@ -19,7 +27,7 @@ rotator &
 for i in ${!TO_PROCESS[@]}; do
     FILE=${TO_PROCESS[$i]}
     TEMP_FILE="$TEMPDIR/$(basename "$FILE")"
-    cpulimit -l 100 ffmpeg -y -hide_banner -loglevel error -threads 1 -i "$FILE" -scodec copy -filter:v fps=25 "$TEMP_FILE"
+    cpulimit -l $CPULIMIT ffmpeg -y -hide_banner -loglevel error -threads 1 -i "$FILE" -scodec copy -filter:v fps=25 "$TEMP_FILE"
     touch -r "$FILE" "$TEMP_FILE" && \
     mv "$TEMP_FILE" "$FILE"
 done
