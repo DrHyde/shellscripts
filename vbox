@@ -24,6 +24,12 @@ bounce () (
         for candidate in  $( list up ); do
             bounce "$candidate"
         done
+    elif [[ "$MACHINE" == *\** ]]; then
+        for candidate in $( list up ); do
+            if [[ "$candidate" == $MACHINE ]]; then
+                bounce "$candidate"
+            fi
+        done
     elif [ "$MACHINE" == "GCA-XP" ]; then
         echo no, not bouncing $MACHINE
     elif [ -z "$MACHINE" ]; then
@@ -52,6 +58,12 @@ stop () (
         for candidate in  $( list up ); do
             stop "$candidate"
         done
+    elif [[ "$MACHINE" == *\** ]]; then
+        for candidate in $( list up ); do
+            if [[ "$candidate" == $MACHINE ]]; then
+                stop "$candidate"
+            fi
+        done
     elif [ -z "$MACHINE" ]; then
         echo vbox stop all\|\{list of machines\}
     elif [ "$MACHINE" == "GCA-XP" ]; then
@@ -74,6 +86,12 @@ start () (
     if [ "$MACHINE" == "all" ]; then
         for candidate in  $( list stopped ); do
             start "$candidate"
+        done
+    elif [[ "$MACHINE" == *\** ]]; then
+        for candidate in $( list stopped ); do
+            if [[ "$candidate" == $MACHINE ]]; then
+                start "$candidate"
+            fi
         done
     elif [ -z "$MACHINE" ]; then
         echo vbox start all\|\{list of machines\}
