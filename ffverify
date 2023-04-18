@@ -15,7 +15,11 @@ fi
 (
     for i in "$@"; do
         printf "$i ... "
-        ffmpeg -v error -i "$i" -map 0:1 -f null - 2>/dev/null
+        (
+            ffmpeg -v error -i "$i" -map 0:1 -f null - 2>/dev/null ||
+            ffmpeg -v error -i "$i" -map 0:0 -f null - 2>/dev/null
+        )
+
         err=$?
         if [[ $err == 255 ]]; then # ffmpeg died on signal, eg C-c
             printf "\n"
