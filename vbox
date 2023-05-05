@@ -24,30 +24,32 @@ bounce () (
         for candidate in  $( list up ); do
             bounce "$candidate"
         done
-    elif [[ "$MACHINE" == *\** ]]; then
+    elif [ "$MACHINE" == "GCA-XP" ]; then
+        echo no, not bouncing $MACHINE
+    elif [ -z "$MACHINE" ]; then                        # no args? error
+        echo vbox bounce all\|\{list of machines\}
+    elif [ ! -z "$1" ]; then                            # multi? iterate
+        for candidate in "$MACHINE" "$@"; do
+            bounce "$candidate"
+        done
+    elif [[ "$MACHINE" == *\** ]]; then                 # wildcard? match and iterate
         for candidate in $( list up ); do
             if [[ "$candidate" == $MACHINE ]]; then
                 bounce "$candidate"
             fi
         done
-    elif [ "$MACHINE" == "GCA-XP" ]; then
-        echo no, not bouncing $MACHINE
-    elif [ -z "$MACHINE" ]; then
-        echo vbox bounce all\|\{list of machines\}
     else
-        for candidate in "$MACHINE" "$@"; do
-            if grep ^$candidate\$ <( list up ) >/dev/null 2>/dev/null ; then
-                stop "$candidate"
-                while grep "^$candidate$" <( list started ) >/dev/null 2>&1; do
-                    sleep 5
-                    echo ... waiting
-                done
+        if grep ^$MACHINE\$ <( list up ) >/dev/null 2>/dev/null ; then
+            stop "$MACHINE"
+            while grep "^$MACHINE$" <( list started ) >/dev/null 2>&1; do
                 sleep 5
-                start "$candidate"
-            else
-                echo What\'s $candidate?
-            fi
-        done
+                echo ... waiting
+            done
+            sleep 5
+            start "$MACHINE"
+        else
+            echo What\'s $MACHINE?
+        fi
     fi
 )
 
@@ -58,25 +60,27 @@ stop () (
         for candidate in  $( list up ); do
             stop "$candidate"
         done
+    elif [ "$MACHINE" == "GCA-XP" ]; then
+        echo no, not stopping $MACHINE
+    elif [ -z "$MACHINE" ]; then
+        echo vbox stop all\|\{list of machines\}
+    elif [ ! -z "$1" ]; then
+        for candidate in "$MACHINE" "$@"; do
+            stop "$candidate"
+        done
     elif [[ "$MACHINE" == *\** ]]; then
         for candidate in $( list up ); do
             if [[ "$candidate" == $MACHINE ]]; then
                 stop "$candidate"
             fi
         done
-    elif [ -z "$MACHINE" ]; then
-        echo vbox stop all\|\{list of machines\}
-    elif [ "$MACHINE" == "GCA-XP" ]; then
-        echo no, not stopping $MACHINE
     else
-        for candidate in "$MACHINE" "$@"; do
-            if grep ^$candidate\$ <( list up ) >/dev/null 2>/dev/null ; then
-                echo stopping $candidate
-                VBoxManage controlvm "$candidate" acpipowerbutton >/dev/null 2>/dev/null
-            else
-                echo What\'s $candidate?
-            fi
-        done
+        if grep ^$MACHINE\$ <( list up ) >/dev/null 2>/dev/null ; then
+            echo stopping $MACHINE
+            VBoxManage controlvm "$MACHINE" acpipowerbutton >/dev/null 2>/dev/null
+        else
+            echo What\'s $MACHINE?
+        fi
     fi
 )
 
@@ -87,25 +91,27 @@ start () (
         for candidate in  $( list stopped ); do
             start "$candidate"
         done
+    elif [ "$MACHINE" == "GCA-XP" ]; then
+        echo no, not starting $MACHINE
+    elif [ -z "$MACHINE" ]; then
+        echo vbox start all\|\{list of machines\}
+    elif [ ! -z "$1" ]; then
+        for candidate in "$MACHINE" "$@"; do
+            start "$candidate"
+        done
     elif [[ "$MACHINE" == *\** ]]; then
         for candidate in $( list stopped ); do
             if [[ "$candidate" == $MACHINE ]]; then
                 start "$candidate"
             fi
         done
-    elif [ -z "$MACHINE" ]; then
-        echo vbox start all\|\{list of machines\}
-    elif [ "$MACHINE" == "GCA-XP" ]; then
-        echo no, not starting $MACHINE
     else
-        for candidate in "$MACHINE" "$@"; do
-            if grep ^$candidate\$ <( list stopped ) >/dev/null 2>/dev/null ; then
-                echo starting $candidate
-                VBoxManage startvm $candidate >/dev/null 2>/dev/null
-            else
-                echo What\'s $candidate?
-            fi
-        done
+        if grep ^$MACHINE\$ <( list stopped ) >/dev/null 2>/dev/null ; then
+            echo starting $MACHINE
+            VBoxManage startvm $MACHINE >/dev/null 2>/dev/null
+        else
+            echo What\'s $MACHINE?
+        fi
     fi
 )
 
