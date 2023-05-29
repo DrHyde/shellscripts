@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+for file in "$@"; do
+    (
+        echo -n $(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of default=noprint_wrappers=1:nokey=1 "$file" |awk -v d=" x " '{s=(NR==1?s:s d)$0}END{print s}') && (
+            if [ $# -ne 1 ]; then
+                echo -n : $file
+            fi
+        ) &&
+        echo
+    ) || echo 0
+done
