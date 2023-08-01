@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+ffverify -q "$1"  && \
+ffmpeg -i "$1" -vn -acodec copy "$2" && \
+touch -r "$1" "$2" && \
+rm "$1" \
