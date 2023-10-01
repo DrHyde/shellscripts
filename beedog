@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+count=$(curl -s -o - https://beedog.github.io/count)
+curl -s -o - "https://beedog.github.io/image$(shuf -i 1-${count} -n 1).png"|img2sixel
