@@ -29,12 +29,21 @@ if [ $? == 0 ]; then
     echo Out of date copyrights found
     exit 1
 fi
-grep -EHi ^=head1.DESCRIPTION $(git ls-files|grep -E \.\(pm\|pod\)$)
-if [ $? == 0 ]; then
-    echo Found a DESCRIPTION, merge it with NAME so better manpages are generated
-    echo see https://github.com/DrHyde/perl-modules-Scalar-Type/pull/17
-    exit 1
-fi
+for i in $(git ls-files|grep -E ^lib/.*\\.\(pm\|pod\)$); do
+    echo checking doco for $i
+    grep -EHi ^=head1.DESCRIPTION $i
+    if [ $? == 0 ]; then
+        echo ... found a DESCRIPTION, checking for a NAME with a description
+        grep -E -A2 ^=head1.NAME $i|tail -1|grep -- -
+        if [ $? == 0 ]; then
+            echo ... OK
+        else
+            echo Found a DESCRIPTION, merge it with NAME so better manpages are generated
+            echo see https://github.com/DrHyde/perl-modules-Scalar-Type/pull/17
+            exit 1
+        fi
+    fi
+done
 
 CHANGELOG=CHANGELOG
 if [ -e Changes ]; then
