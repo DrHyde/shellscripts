@@ -24,7 +24,7 @@ if perl -MJSON::Parse=json_file_to_perl -e '$p=json_file_to_perl("MYMETA.json");
     exit 1
 fi
 
-grep -Ei copyright\\s\\d\\d\\d\\d $(git ls-files|grep -v \.txt$)|grep -vi maxmind|grep -vi somerville|grep -v $(date +%Y)
+grep -Ei copyright\\s\\d\\d\\d\\d $(git ls-files|grep -v inc/Devel/AssertOS|grep -v inc/Devel/CheckOS|grep -v \.txt$)|grep -vi maxmind|grep -vi somerville|grep -v $(date +%Y)
 if [ $? == 0 ]; then
     echo Out of date copyrights found
     exit 1
