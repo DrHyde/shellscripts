@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+for file in "$@"; do
+    (
+        SECONDS=$(calc "int($(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "$file"))")
+        HOURS=$(( SECONDS / 3600 ))
+          SECONDS=$(( SECONDS - HOURS * 3600 ))
+        MINUTES=$(( SECONDS / 60 ))
+          SECONDS=$(( SECONDS - MINUTES * 60 ))
+
+        echo -n ${HOURS}h ${MINUTES}m ${SECONDS}s && (
+            if [ $# -ne 1 ]; then
+                echo -n : $file
+            fi
+        ) &&
+        echo
+    ) || echo 0
+done
