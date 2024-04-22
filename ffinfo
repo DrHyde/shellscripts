@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+for file in "$@"; do
+    (
+        if [ $# -ne 1 ]; then
+            echo $file
+        fi
+        echo "  fps:        " $(fps "$file")
+        echo "  resolution: " $(ffres "$file")
+        echo "  duration:   " $(ffduration "$file")
+    )
+done
