@@ -110,7 +110,8 @@ start () (
         if grep ^$MACHINE\$ <( list stopped ) >/dev/null 2>/dev/null ; then
             echo starting $MACHINE
             utmctl start $MACHINE >/dev/null 2>/dev/null
-            while ! ping -c1 "$MACHINE" >/dev/null 2>&1; do
+            ALTERNATE_NAME="$(echo $MACHINE|sed 's/.local$//')"
+            while ! (ping -c1 "$MACHINE" || ping -c1 "$ALTERNATE_NAME" ) >/dev/null 2>&1; do
                 echo ... waiting
                 sleep 5
             done
@@ -134,7 +135,8 @@ liststarted () (
 
 listup () (
     for candidate in $( liststarted ); do
-        ping -c1 $candidate >/dev/null 2>/dev/null && echo $candidate
+        ALTERNATE_NAME="$(echo $candidate|sed 's/.local$//')"
+        (ping -c1 "$candidate" || ping -c1 "$ALTERNATE_NAME" ) >/dev/null 2>&1 && echo $candidate
     done
 )
 
