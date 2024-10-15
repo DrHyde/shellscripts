@@ -16,6 +16,8 @@ main () (
         start "$@"
     elif [ "$VERB" == "stop" ]; then
         stop "$@"
+    elif [ "$VERB" == "status" ]; then
+        status "$@"
     elif [ "$VERB" == "bounce" ]; then
         bounce "$@"
     else
@@ -118,6 +120,26 @@ start () (
         else
             echo What\'s $MACHINE?
         fi
+    fi
+)
+
+status () (
+    MACHINE="$1"
+    shift
+    if [ "$MACHINE" == "all" ]; then
+        for status in stopped started up; do
+            STATUSES="$(list $status)"
+            if [ ! -z "$STATUSES" ]; then
+                echo $status
+                echo $STATUSES|sed 's/ /\n/g'|sed 's/^/  /'
+            fi
+        done
+    elif [ -z "$1" ]; then
+        echo utm status all\|\{list of machines\}
+    elif [ ! -z "$1" ]; then
+        echo status \$machine not yet implemented, sorry
+    elif [[ "$MACHINE" == *\** ]]; then
+        echo status \$wildcard not yet implemented, sorry
     fi
 )
 
