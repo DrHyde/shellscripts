@@ -6,7 +6,7 @@
 #   eval "$(cat $HOME/bin/lib/stdbashlib)"
 
 function script_dir (
-    cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1
+    cd -- "$(dirname -- "${BASH_SOURCE[0]}")" > /dev/null 2>&1
     pwd
 )
 
