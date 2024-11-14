@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+
+verbose=0
+encodings=()
+files=()
+
+usage() {
+    cat << EO_USAGE
+
+Usage: $(basename "$0") [-v] [-a]  [-c <encoding>] [-c <encoding> ...] <file> [<file> ...]
+
+Options:
+  -v  Verbose output. Say this up to three times to get more output.
+  -c  Encoding to check for. If multiple encodings are specified then
+      files are checked against each encoding in turn.
+  -a  Equivalent to '-c ASCII'
+
+If no encodings are specified then we assume you want UTF-8.
+
+The script returns success if all the files are given match at least one
+of the encodings. Note that some inputs will match many encodings.
+
+By default there is no output unless one of the files doesn't exist or
+can't be read. If verbose output is turned on you'll also be told
+which file/encoding pairs don't match, and which files don't match any
+of the specified encodings.
+
+The script uses iconv to check the encoding of the files. Use \`iconv -l\` to
+check what encodings are supported.
+
+EO_USAGE
+}
+
+output() {
+    if [ $verbose -ge 1 ]; then
+        echo "$@"
+    fi
+}
+
+debug() {
+    if [ $verbose -ge 2 ]; then
+        error "$@"
+    fi
+}
+
+verydebug() {
+    if [ $verbose -ge 3 ]; then
+        error "$@"
+    fi
+}
+
+error() {
+    if [ $verbose -ge 1 ]; then
+            echo "$@" >&2
+    fi
+}
+
+while getopts "havc:" arg; do
+    case "${arg}" in
+        v)
+            verbose=$((verbose + 1))
+            ;;
+        a)
+            encodings+=("ASCII")
+            ;;
+        c)
+            encodings+=("${OPTARG}")
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 1
+            ;;
+    esac
+done
+
+shift $((OPTIND-1))
+files+=("$@")
+
+if [ ${#encodings[@]} == 0 ]; then
+    encodings+=("UTF-8")
+fi
+
+if [ ${#files[@]} == 0 ] ; then
+  usage >&2
+  exit 1
+fi
+
+verydebug set verbosity to $verbose
+verydebug "set encodings to [" "${encodings[*]}" "]"
+verydebug "set files to [" "${files[*]}" "]"
+
+process_stream() {
+    stream_contents="$(cat -)"
+    if [ -n "$stream_contents" ]; then
+        "$@" "$stream_contents"
+    fi
+}
+
+for file in "${files[@]}"; do
+    matched_encoding=0
+    if [ ! -f "$file" ] || [ ! -r "$file" ]; then
+        verbose=1
+        error "$file: can't read file"
+        exit 1
+    fi
+    for encoding in "${encodings[@]}"; do
+        debug "checking $file against $encoding"
+        iconv -f "$encoding" -t UTF8 "$file" \
+            2> >( process_stream error "  $file: $encoding:" ) \
+            |unbuffer -p grep -v ^
+        if [ ${PIPESTATUS[0]} == 0 ]; then
+            debug "  $file is plausibly encoded with $encoding"
+            matched_encoding=1
+            break
+        else
+            debug "  $file is not encoded with $encoding"
+        fi
+    done
+    if [ $matched_encoding == 0 ]; then
+        error "  $file is not encoded in any of the specified encodings"
+        exit 1
+    fi
+done
+
