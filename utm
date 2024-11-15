@@ -18,10 +18,54 @@ main () (
         stop "$@"
     elif [ "$VERB" == "status" ]; then
         status "$@"
+    elif [ "$VERB" == "backup" ]; then
+        backup "$@"
+    elif [ "$VERB" == "compress" ]; then
+        compress "$@"
     elif [ "$VERB" == "bounce" ]; then
         bounce "$@"
     else
         echo utm list\|start\|stop\|bounce
+    fi
+)
+
+compress() (
+    local started="$( list started | grep ^ )"
+    local up="$( list up | grep ^ )"
+    if [ -z "$started" ] && [ -z "$up" ]; then
+        echo Compressing
+        echo
+        cd ~/Library/Containers/com.utmapp.UTM/Data/Documents && \
+        (
+            du -sch *utm
+            for i in */*/*qcow2; do
+                qemu-img convert -O qcow2 "$i" shrunk && mv shrunk "$i"
+            done
+            echo
+            du -sch *utm
+        )
+    else
+        echo Can\'t compress, some machines are still running:
+        (
+            echo $started
+            echo $up
+        )|sort|uniq
+    fi
+)
+
+backup() (
+    local started="$( list started | grep ^ )"
+    local up="$( list up | grep ^ )"
+    if [ -z "$started" ] && [ -z "$up" ]; then
+        echo Backing up
+        cd "/Volumes/VaultBackup/snapshots/daily.0/UTM VMs" && \
+        rsync -Pavessh --delete --exclude UTM?storage?dir ~/Library/Containers/com.utmapp.UTM/Data/Documents/ .
+    else
+        echo Can\'t backup, some machines are still running:
+        (
+            echo $started
+            echo $up
+        )|sort|uniq
     fi
 )
 
