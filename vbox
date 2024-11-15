@@ -14,8 +14,26 @@ main () (
         status "$@"
     elif [ "$VERB" == "bounce" ]; then
         bounce "$@"
+    elif [ "$VERB" == "backup" ]; then
+        backup"$@"
     else
         echo vbox list\|start\|stop\|bounce
+    fi
+)
+
+backup() (
+    local started="$( list started | grep ^ )"
+    local up="$( list up | grep ^ )"
+    if [ -z "$started" ] && [ -z "$up" ]; then
+        echo Backing up
+        cd "/Volumes/VaultBackup/snapshots/daily.0/VirtualBox VMs" && \
+        rsync -Pavessh --delete ~/VirtualBox?VMs/ .
+    else
+        echo Can\'t backup, some machines are still running:
+        (
+            echo $started
+            echo $up
+        )|sort|uniq
     fi
 )
 
