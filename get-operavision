@@ -19,5 +19,5 @@ if [[ $VTT != "" ]]; then
     MP4="$(ls ./*$1*.mp4)"
     ffaddsubs "$MP4" "$VTT"
     rm "$VTT"
-    50-2-25 "$MP4"
 fi
+ts 50-2-25 "$MP4"
