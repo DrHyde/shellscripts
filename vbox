@@ -14,10 +14,34 @@ main () (
         status "$@"
     elif [ "$VERB" == "bounce" ]; then
         bounce "$@"
+    elif [ "$VERB" == "compress" ]; then
+        compress "$@"
     elif [ "$VERB" == "backup" ]; then
         backup"$@"
     else
         echo vbox list\|start\|stop\|bounce
+    fi
+)
+
+compress() (
+    local started="$( list started | grep ^ )"
+    local up="$( list up | grep ^ )"
+    if [ -z "$started" ] && [ -z "$up" ]; then
+        echo Compressing
+        echo
+        (
+            cd && cd "VirtualBox VMs" && \
+            du -sch * && \
+            find . -name \*.vdi -exec VBoxManage modifymedium {} --compact \; && \
+            echo && \
+            du -sch *
+        )
+    else
+        echo Can\'t compress, some machines are still running:
+        (
+            echo $started
+            echo $up
+        )|sort|uniq
     fi
 )
 
