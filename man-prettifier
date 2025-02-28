@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+col -bx|sh -c 'bat -l man -p'
