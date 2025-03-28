@@ -12,7 +12,7 @@ if [[ "$SUBSLANG" != "" ]]; then
     SUBSLANG="--sub-lang $SUBSLANG --write-sub"
 fi
 
-yt-dlp -f "136+140 / 311+140" $SUBSLANG -- "$1"
+yt-dlp -f "136+140 / 311+140 / 232+233" $SUBSLANG -- "$1"
 
 VTT="$(ls ./*$1*.vtt 2>/dev/null)" || true
 if [[ $VTT != "" ]]; then
