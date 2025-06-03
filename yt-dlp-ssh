@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+ssh_pid=-1 # global
+
+function get_available_ssh_port() {
+  local minport=1337
+  local maxport=1366
+
+  if [[ "$(which nc 2>/dev/null)" == "" || "$(which nc 2>/dev/null)" == "no nc in"* ]]; then
+    echo "Error: 'nc' command not found." >&2
+    echo -1
+    return
+  fi
+
+  local port=$minport
+  while true; do
+    if [[ "$port" == "$((maxport+1))" ]]; then
+      echo "Error: No available SSH port found." >&2
+      echo -1
+      return
+    elif nc -z localhost "$port" >/dev/null 2>&1; then
+      ((port++))
+    else
+      echo "$port"
+      return
+    fi
+  done
+}
+
+function main {
+  local port=$(get_available_ssh_port)
+  if [[ "$port" -lt "0" ]]; then
+    exit 1
+  fi
+
+  echo "Using SSH on port: $port"
+  ssh -D $port -N duckpond.barnyard.co.uk &
+  ssh_pid=$!
+  disown
+  trap ctrl_c INT
+
+  yt-dlp --proxy "socks5://localhost:$port" "$@"
+  kill $ssh_pid
+}
+
+function ctrl_c() {
+  echo "Killing SSH process $ssh_pid"
+  kill $ssh_pid
+  exit 1
+}
+
+main "$@"
