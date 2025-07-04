@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+export USER_AGENT="User-Agent: DCANTRELL-get-cpan-river"
+
+(
+    for i in $(
+        curl -H "$USER_AGENT" -s https://fastapi.metacpan.org/v1/distribution/_search -d '{
+            "size": 5000,
+            "query": {
+                "bool": {
+                    "must": [
+                        { "term": { "river.bucket": 5 } }
+                    ]
+                }
+            }
+        }'|jq -r '.hits.hits[]|._id'
+    ); do
+        curl -H "$USER_AGENT" -s https://fastapi.metacpan.org/v1/release/$i | jq -r '.download_url'
+    done | grep -v /perl-5
+
+    for i in $(
+        curl -H "$USER_AGENT" -s https://fastapi.metacpan.org/v1/distribution/_search -d '{
+            "size": 5000,
+            "query": {
+                "bool": {
+                    "must": [
+                        { "term": { "river.bucket": 4 } }
+                    ]
+                }
+            }
+        }'|jq -r '.hits.hits[]|._id'
+    ); do
+        curl -H "$USER_AGENT" -s https://fastapi.metacpan.org/v1/release/$i | jq -r '.download_url'
+    done
+)|sed 's/.*id\/.\/..\///'|grep -v ^null$
