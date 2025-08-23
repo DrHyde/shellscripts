@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+_help() {
+    echo "Usage: $(basename "$0") --from <hh:mm:ss> --to <hh:mm:ss> --input <input_file>"
+}
+
+from=""
+to=""
+input=""
+
+while [ "${1:-}" != '' ]; do
+    case "$1" in
+      '-f' | '--from')
+        shift
+        from=$1
+        ;;
+      '-t' | '--to')
+        shift
+        to=$1
+        ;;
+      '-i' | '--input')
+        shift
+        input=$1
+        ;;
+      '-h' | '--help')
+        echo "$(_help)"
+        exit 0
+        ;;
+    esac
+    shift
+done
+
+if [ -z "$from" ] || [ -z "$to" ] || [ -z "$input" ]; then
+    echo "$(_help)" > /dev/stderr
+    exit 1
+fi
+
+TEMPDIR=fftrim.temp.$$/
+mkdir $TEMPDIR
+TEMP_FILE="$TEMPDIR/$(basename "$input")"
+
+ffmpeg -hide_banner -loglevel error -y -i "$input" -ss "$from" -to "$to" -c copy "$TEMP_FILE" && \
+    touch -r "$input" "$TEMP_FILE" && \
+    mv "$TEMP_FILE" "$input" && \
+    rmdir $TEMPDIR
+
