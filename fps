@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+if [ "$1" == "-j" ]; then
+    shift
+    $0 "$@" | jq -Rn '
+        [inputs
+        | capture("(?<fps>\\d+(\\.\\d+)?)(: (?<file>.*))?")
+        | {file: .file // "'"$1"'", fps: (.fps | tonumber)}] | if length == 1 then .[0] else . end
+    '
+    exit $?
+fi
+
 for file in "$@"; do
     (
         echo -n $(ffmpeg -i "$file" 2>&1 | sed -n "s/.*, \(.*\) fp.*/\1/p") && (
