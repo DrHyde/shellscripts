@@ -3,10 +3,17 @@
 for file in "$@"; do
     (
         if [ $# -ne 1 ]; then
-            echo $file
+            echo "$file"
         fi
-        echo "  fps:        " $(fps "$file")
-        echo "  resolution: " $(ffres "$file")
-        echo "  duration:   " $(ffduration "$file")
+
+        eval "$(
+            (echo FPS=\""$(fps "$file")"\")&
+            (echo FFRES=\""$(ffres "$file")"\")&
+            (echo FFDURATION=\""$(ffduration "$file")"\")&
+            wait
+        )"
+        echo "  fps:        $FPS"
+        echo "  resolution: $FFRES"
+        echo "  duration:   $FFDURATION"
     )
 done
