@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# -j to report in JSON
+# -r RATE to check if the rate of the given file matches RATE
+
 if [ "$1" == "-j" ]; then
     shift
     $0 "$@" | jq -Rn '
@@ -8,6 +11,20 @@ if [ "$1" == "-j" ]; then
         | {file: .file // "'"$1"'", fps: (.fps | tonumber)}] | if length == 1 then .[0] else . end
     '
     exit $?
+elif [ "$1" == "-r" ]; then
+    shift
+    RATEWANTED=$1
+    shift
+
+    if [ $# -ne 1 ]; then
+        echo "Error: -r requires exactly one file" >&2
+        exit 2
+    fi
+    if [ "$($0 "$1")" == "$RATEWANTED" ]; then
+        exit 0
+    else
+        exit 1
+    fi
 fi
 
 for file in "$@"; do
