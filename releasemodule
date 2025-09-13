@@ -68,7 +68,7 @@ if grep ^$VERSION $CHANGELOG |grep $(date +%Y-%m-%d); then
   echo "  " git tag -a -m \"$MODULE release $VERSION\" release-$VERSION |sed s/\\\\././g && \
   echo "  " git push --tags && \
   pwd|grep -q Number-Phone$ && \
-  echo "  " \(cd data-files\;git tag -a -m \"$MODULE release $VERSION\" release-$VERSION\) |sed s/\\\\././g
+  echo "  " \(cd data-files\;git tag -a -m \"$MODULE release $VERSION\" release-$VERSION\;git push --tags\) |sed s/\\\\././g
   # this repo no longer has a remote
   # echo "  " \(cd data-files\;git push --tags\)
 else
