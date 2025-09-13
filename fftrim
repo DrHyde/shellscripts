@@ -41,7 +41,7 @@ TEMPDIR=fftrim.temp.$$/
 mkdir $TEMPDIR
 TEMP_FILE="$TEMPDIR/$(basename "$input")"
 
-ffmpeg -hide_banner -loglevel error -y -i "$input" -ss "$from" -to "$to" -c copy "$TEMP_FILE" && \
+ffmpeg -hide_banner -loglevel error -y -i "$input" -ss "$from" -to "$to" -acodec copy -vcodec copy -scodec copy "$TEMP_FILE" && \
     touch -r "$input" "$TEMP_FILE" && \
     mv "$TEMP_FILE" "$input" && \
     rmdir $TEMPDIR
