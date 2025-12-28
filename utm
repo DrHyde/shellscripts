@@ -89,7 +89,7 @@ bounce () (
             fi
         done
     else
-        if grep ^$MACHINE\$ <( list up ) >/dev/null 2>/dev/null ; then
+        if grep "^$MACHINE\$" <( list up ) >/dev/null 2>/dev/null ; then
             stop "$MACHINE"
             while grep "^$MACHINE$" <( list started ) >/dev/null 2>&1; do
                 sleep 5
@@ -123,7 +123,7 @@ stop () (
             fi
         done
     else
-        if grep ^$MACHINE\$ <( list up ) >/dev/null 2>/dev/null ; then
+        if grep "^$MACHINE\$" <( list up ) >/dev/null 2>/dev/null ; then
             echo stopping $MACHINE
             utmctl stop "$MACHINE" --request >/dev/null 2>/dev/null
             sleep 5
@@ -153,7 +153,7 @@ start () (
             fi
         done
     else
-        if grep ^$MACHINE\$ <( list stopped ) >/dev/null 2>/dev/null ; then
+        if grep "^$MACHINE\$" <( list stopped ) >/dev/null 2>/dev/null ; then
             echo starting $MACHINE
             utmctl start $MACHINE >/dev/null 2>/dev/null
             ALTERNATE_NAME="$(echo $MACHINE|sed 's/.local$//')"
