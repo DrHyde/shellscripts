@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CPULIMIT=1000
+CPULIMIT=500
 
 if [ "$1" == "--cpulimit" ]; then
     CPULIMIT=$2
