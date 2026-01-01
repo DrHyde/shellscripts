@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+for repo in $(gh repo list --limit 1000 --json nameWithOwner --jq '.[].nameWithOwner'); do
+    for pr in $(gh pr list -R "$repo" -A app/dependabot --json number --jq '.[].number'); do
+        gh pr view -R "$repo" "$pr" -w
+    done
+done
