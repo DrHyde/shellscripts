@@ -50,6 +50,10 @@ if [ -e Changes ]; then
   CHANGELOG=Changes
 fi
 
+if [ "$MODULE" == "Devel::Hide" ]; then
+    DEVEL_HIDE_VERBOSE=1
+fi
+
 if grep ^$VERSION $CHANGELOG |grep $(date +%Y-%m-%d); then
   if [ "$MODULE" == "Test::Differences" ]; then
     PERL5OPT=-MDevel::Hide=Unknown::Values $MAKE test || exit 1;
@@ -62,7 +66,13 @@ if grep ^$VERSION $CHANGELOG |grep $(date +%Y-%m-%d); then
   fi
 
   $MAKE test && \
-  PERL5OPT=-MDevel::Hide=Test::Pod::Coverage,Test::Pod $MAKE test && \
+  (
+      if [ "$MODULE" != "Devel::Hide" ]; then
+          PERL5OPT=-MDevel::Hide=Test::Pod::Coverage,Test::Pod $MAKE test
+      else
+          true
+      fi
+  ) && \
   $MAKE dist && \
   echo if everything looks ok, ... && \
   echo "  " git tag -a -m \"$MODULE release $VERSION\" release-$VERSION |sed s/\\\\././g && \
