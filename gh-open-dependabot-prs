@@ -1,7 +1,106 @@
 #!/usr/bin/env bash
 
-for repo in $(gh repo list --limit 1000 --json nameWithOwner --jq '.[].nameWithOwner'); do
-    for pr in $(gh pr list -R "$repo" -A app/dependabot --json number --jq '.[].number'); do
-        gh pr view -R "$repo" "$pr" -w
-    done
+usage() {
+    echo "
+Usage: $0 [-a author] [-o repo_owner] [-l limit] [-nhO]
+
+Uses \`gh\` to grovel over Github repos and open PRs in the web browser. By
+default Dependabot PRs against the currently authenticated user's  repos are
+opened.
+
+Options:
+  -o repo_owner  The owner of the repos to search. Use '.' for all owners.
+                   Default: the currently authenticated \`gh\` user
+
+  -a author      The author of the PRs to open. Use '.' for all authors.
+                   Default: 'app/dependabot' unless -o is set to something
+                   other than the default, in which case the default is the
+                   current user.
+
+  -l limit       The maximum number of PRs to open
+                   Default: 100
+
+  -O             Report who we think is the current user and immediately exit
+
+  -h             Show this help and immediately exit
+
+  -n             Dummy run, only show what would be done
+
+You can't provide both \`-a .\` and \`-o .\`.
+"
+}
+
+DEFAULT_OWNER="$(gh auth status --json hosts --jq '.hosts."github.com".[].login')"
+
+OWNER="--owner $DEFAULT_OWNER"
+AUTHOR="--author app/dependabot"
+LIMIT="--limit 100"
+DRYRUN=0
+
+HAVE_SET_AUTHOR=0
+
+while getopts ":a:o:l:hOn" o; do
+    case "${o}" in
+        h)
+            usage
+            exit 0
+            ;;
+        a)
+            HAVE_SET_AUTHOR=1
+            if [[ "${OPTARG}" == "." ]]; then
+                AUTHOR=""
+            else
+                AUTHOR="--author ${OPTARG}"
+            fi
+            ;;
+        o)
+            if [[ "${OPTARG}" == "." ]]; then
+                OWNER=""
+            else
+                OWNER="--owner ${OPTARG}"
+            fi
+            ;;
+        O)
+            echo "Current user: $DEFAULT_OWNER"
+            exit 0
+            ;;
+        n)
+            DRYRUN=1
+            ;;
+        l)
+            LIMIT="--limit ${OPTARG}"
+            ;;
+        *)
+            usage 1>&2
+            exit 1
+            ;;
+    esac
 done
+
+if [[ $HAVE_SET_AUTHOR -eq 0 && $OWNER != "--owner $DEFAULT_OWNER" ]]; then
+    AUTHOR="--author $DEFAULT_OWNER"
+fi
+
+if [[ -z "$OWNER" && -z "$AUTHOR" ]]; then
+    echo "You can't provide both \`-a .\` and \`-o .\`." 1>&2
+    exit 1
+fi
+
+if [[ $DRYRUN -eq 1 ]]; then
+    echo "OWNER: '$OWNER'"
+    echo "AUTHOR: '$AUTHOR'"
+    echo "LIMIT: '$LIMIT'"
+    echo
+    echo "Query: gh search prs $LIMIT $OWNER $AUTHOR --state open"
+    echo
+fi
+
+gh search prs $LIMIT $OWNER $AUTHOR --state open --json repository,number \
+  --jq '.[] | "gh pr view -R " + .repository.nameWithOwner + " " + (.number|tostring) + " -w"' \
+    | while read -r cmd; do
+       if [[ $DRYRUN -eq 1 ]]; then
+           echo "Would run: $cmd"
+           continue
+       fi
+       eval $cmd
+    done
