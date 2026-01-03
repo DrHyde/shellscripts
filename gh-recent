@@ -4,12 +4,13 @@ export PATH=$PATH:/usr/local/bin
 
 echo Recent PRs
 echo
-gh search prs --owner DrHyde    --state open --json createdAt,url --jq '(.[]|select(now - (.createdAt|fromdateiso8601) < 3600*24*60)).url'
-gh search prs --owner rsnapshot --state open --json createdAt,url --jq '(.[]|select(now - (.createdAt|fromdateiso8601) < 3600*24*60)).url'
+for owner in DrHyde rsnapshot DBM-Deep; do
+    gh search prs --owner $owner --state open --json createdAt,url --jq '(.[]|select(now - (.createdAt|fromdateiso8601) < 3600*24*60)).url'
+done
 
 echo
 echo Recent issues
 echo
-gh search issues --owner DrHyde    --state open --json createdAt,url --jq '(.[]|select(now - (.createdAt|fromdateiso8601) < 3600*24*60)).url'
-gh search issues --owner rsnapshot --state open --json createdAt,url --jq '(.[]|select(now - (.createdAt|fromdateiso8601) < 3600*24*60)).url'
-
+for owner in DrHyde rsnapshot DBM-Deep; do
+    gh search issues --owner $owner --state open --json createdAt,url --jq '(.[]|select(now - (.createdAt|fromdateiso8601) < 3600*24*60)).url'
+done
