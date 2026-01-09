@@ -10,10 +10,12 @@ for file in "$@"; do
             (echo FPS=\""$(fps "$file")"\")&
             (echo FFRES=\""$(ffres "$file")"\")&
             (echo FFDURATION=\""$(ffduration "$file")"\")&
+            (echo SIZE=\""$(wc -c < "$file"|sed 's/ //g')"\")&
             wait
         )"
         echo "  fps:        $FPS"
         echo "  resolution: $FFRES"
         echo "  duration:   $FFDURATION"
+        echo "  size:       $SIZE"
     )
 done
