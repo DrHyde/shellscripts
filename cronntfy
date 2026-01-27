@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+error_command=()
+
+usage() {
+    cat << EO_USAGE
+
+Usage: $(basename "$0") -t topic -m message [-e what to do on error {}]
+
+Options:
+  -t  The ntfy topic to broadcast to, eg ntfy.sh/mytopic
+  -m  The message to send
+  -e  Optional what to do on error. {} is replaced with an error message.
+
+For example:
+
+  $(basename "$0") -t ntfy.sh/mytopic -m "Hello, World!" -e 'echo {} >> /var/log/ntfy_errors.log'
+
+Or if you just want cron to fall back to emailing you the error:
+
+  $(basename "$0") -t ntfy.sh/mytopic -m "Hello, World!" -e echo {}
+
+On error the script exits with a non-zero status, zero otherwise. The error
+message emitted will be something like:
+
+  $(basename "$0") error
+    message: <message>
+    topic: <topic>
+
+EO_USAGE
+}
+
+error() {
+    echo "$@" >&2
+}
+
+while getopts "ht:m:e:" arg; do
+    case "${arg}" in
+        t) topic=${OPTARG} ;;
+        m) message=${OPTARG} ;;
+        e)
+            shift $((OPTIND-2))
+            error_command=("$@")
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 1
+            ;;
+    esac
+done
+
+if [ -z "${topic}" ] || [ -z "${message}" ]; then
+    usage >&2
+    exit 1
+fi
+
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST -d "${message}" "https://${topic}")
+if [ "${response}" -ne 200 ]; then
+    if [ ${#error_command[@]} -gt 0 ]; then
+        err_msg=$(printf "$(basename "$0") error\n  message: %s\n  topic: %s" "$message" "$topic")
+        cmd="${error_command[@]//\{\}/\"$err_msg\"}"
+        eval "$cmd"
+    fi
+    exit 1
+fi
