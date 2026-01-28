@@ -20,6 +20,20 @@ function seconds-to-hms {
     printf "$format\n" $hours $minutes $seconds
 }
 
+function start_timer {
+    timer_start_time=$(date +%s)
+}
+
+function end_timer {
+    timer_elapsed_seconds=$(( $(date +%s) - timer_start_time ))
+    unset timer_start_time
+}
+
+function timer_elapsed_seconds {
+    echo $timer_elapsed_seconds
+    unset timer_elapsed_seconds
+}
+
 STDLIB_ORIG_PATH="$PATH"
 
 function remove_from_path {
