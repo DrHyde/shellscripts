@@ -10,6 +10,16 @@ function script_dir (
     pwd
 )
 
+function seconds-to-hms {
+    local format=$1
+    local total_seconds=$2
+
+    local hours=$(( total_seconds / 3600 ))
+    local minutes=$(( (total_seconds % 3600) / 60 ))
+    local seconds=$(( total_seconds % 60 ))
+    printf "$format\n" $hours $minutes $seconds
+}
+
 STDLIB_ORIG_PATH="$PATH"
 
 function remove_from_path {
