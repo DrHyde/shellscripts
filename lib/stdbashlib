@@ -5,6 +5,24 @@
 #
 #   eval "$(cat $HOME/bin/lib/stdbashlib)"
 
+no_colour='\e[0m'
+
+function yellow_text {
+    echo -e '\e[0;33m'"$@"$no_colour
+}
+
+function blue_text {
+    echo -e '\e[1;34m'"$@"$no_colour
+}
+
+function green_text {
+    echo -e '\e[1;32m'"$@"$no_colour
+}
+
+function red_text {
+    echo -e '\e[1;31m'"$@"$no_colour
+}
+
 function script_dir (
     cd -- "$(dirname -- "${BASH_SOURCE[0]}")" > /dev/null 2>&1
     pwd
