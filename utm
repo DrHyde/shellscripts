@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+eval "$(cat $HOME/bin/lib/stdbashlib)"
+
 main () (
     ps aux|grep UTM.app/Contents/MacOS/UTM > /dev/null 2>&1 || (
         echo Need to start UTM
@@ -32,25 +34,26 @@ main () (
 compress() (
     local started="$( list started | grep ^ )"
     local up="$( list up | grep ^ )"
-    if [ -z "$started" ] && [ -z "$up" ]; then
-        echo Compressing
-        echo
-        cd ~/Library/Containers/com.utmapp.UTM/Data/Documents && \
-        (
-            du -sch *utm
-            for i in */*/*qcow2; do
-                qemu-img convert -O qcow2 "$i" shrunk && mv shrunk "$i"
+
+    cd ~/Library/Containers/com.utmapp.UTM/Data/Documents
+
+    for i in *.utm; do
+        # remove .utm from end of dir name
+        local candidate="$(echo $i | sed 's/\.utm$//')"
+        if grep "$candidate" <( echo $started; echo $up ) >/dev/null 2>/dev/null ; then
+            red_text Skipping $i, machine is running
+        else
+            green_text Compressing $i
+            du -sch $i|grep $i|sed 's/^/  before: /'
+
+            for j in $i/Data/*qcow2; do
+                qemu-img convert -O qcow2 "$j" shrunk && \
+                    mv shrunk "$j"
             done
-            echo
-            du -sch *utm
-        )
-    else
-        echo Can\'t compress, some machines are still running:
-        (
-            echo $started
-            echo $up
-        )|sort|uniq
-    fi
+
+            du -sch $i|grep $i|sed 's/^/   after: /'
+        fi
+    done
 )
 
 backup() (
