@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+eval "$(cat $HOME/bin/lib/stdbashlib)"
+
 main () (
     VERB="$1"
     shift
@@ -26,23 +28,23 @@ main () (
 compress() (
     local started="$( list started | grep ^ )"
     local up="$( list up | grep ^ )"
-    if [ -z "$started" ] && [ -z "$up" ]; then
-        echo Compressing
-        echo
-        (
-            cd && cd "VirtualBox VMs" && \
-            du -sch * && \
-            find . -name \*.vdi -exec VBoxManage modifymedium {} --compact \; && \
-            echo && \
-            du -sch *
-        )
-    else
-        echo Can\'t compress, some machines are still running:
-        (
-            echo $started
-            echo $up
-        )|sort|uniq
-    fi
+
+    cd "$HOME/VirtualBox VMs"
+
+    for i in *; do
+        if grep "$i" <( echo $started; echo $up ) >/dev/null 2>/dev/null ; then
+            red_text Skipping $i, machine is running
+        else
+            green_text Compressing $i
+            du -sch "$i"|grep "$i"|sed 's/^/  before: /'
+
+            for j in "$i"/*.vdi; do
+                VBoxManage modifymedium "$j" --compact 2>/dev/null || red_text It\'s all gone wrong
+            done
+
+            du -sch "$i"|grep "$i"|sed 's/^/   after: /'
+        fi
+    done
 )
 
 backup() (
