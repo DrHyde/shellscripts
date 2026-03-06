@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+docker system prune
+docker run --privileged --pid=host docker/desktop-reclaim-space
