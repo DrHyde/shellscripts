@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+if [ "$#" -ne 1 -o "$1" = "-h" ]; then
+    echo
+    echo "Usage: $0 <string>"
+    echo
+    echo "Reads from STDIN and outputs lines until a line containing <string>"
+    echo "is found. The matching line is included in the output."
+    echo
+    if [ "$1" = "-h" ]; then
+        exit 0
+    else
+        exit 1
+    fi
+fi
+
+while IFS= read -r line; do
+    echo "$line"
+    if [[ "$line" == *"$1"* ]]; then
+        break
+    fi
+done
