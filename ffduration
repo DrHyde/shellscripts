@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 
-eval "$(cat $HOME/bin/lib/stdbashlib)"
-
 for file in "$@"; do
     (
-        SECONDS=$(calc "int($(ffprobe -v error -select_streams a:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "$file"))")
+        DURATION="$(ffprobe -i "$file" -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal | sed 's/\.[[:digit:]]*//')"
 
-        echo -n $(seconds-to-hms "%dh %dm %ds" $SECONDS) && (
+        echo -n $DURATION && (
             if [ $# -ne 1 ]; then
                 echo -n : $file
             fi
