@@ -29,6 +29,9 @@ fi
 
 for file in "$@"; do
     (
+        # for files that contain ISO-Latin-1 in metadata
+        export LANG=C
+
         echo -n $(ffmpeg -i "$file" 2>&1 | sed -n "s/.*, \(.*\) fp.*/\1/p") && (
             if [ $# -ne 1 ]; then
                 echo -n : $file
