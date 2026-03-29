@@ -10,6 +10,7 @@ for file in "$@"; do
             (echo FPS=\""$(fps "$file")"\")&
             (echo FFRES=\""$(ffres "$file")"\")&
             (echo FFDURATION=\""$(ffduration "$file")"\")&
+            (echo SUBS=\""$(ffsubs "$file")"\")&
             (echo SIZE=\""$(printf "%'d" $(wc -c < "$file"|sed 's/ //g'))"\")&
             wait
         )"
@@ -17,5 +18,6 @@ for file in "$@"; do
         echo "  resolution: $FFRES"
         echo "  duration:   $FFDURATION"
         echo "  size:       $SIZE"
+        echo "  subs:       $SUBS"
     )
 done

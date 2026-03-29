@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+for file in "$@"; do
+    (
+        SUBS="$(echo $(ffprobe -loglevel error -select_streams s -show_entries stream_tags=language -of csv=p=0 "$file"|sort|uniq)|sed 's/ /, /g')"
+
+        echo -n $SUBS && (
+            if [ $# -ne 1 ]; then
+                echo -n : $file
+            fi
+        ) &&
+        echo
+    ) || echo 0
+done
