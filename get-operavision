@@ -4,8 +4,6 @@ set -eu -o pipefail
 
 [[ "$1" =~ ^http.* ]] && echo "Provide a Youtube ID, not a URL" && exit 1
 
-renice -n 19 -p $$
-
 SUBSLANG="$(yt-dlp --list-subs -- "$1"|grep ^en|tail -1|cut -d ' ' -f1)" || true
 
 if [[ "$SUBSLANG" != "" ]]; then
@@ -15,8 +13,8 @@ fi
 yt-dlp -f "136+140 / 311+140 / 232+233 / 398+140 / 299+140 / 300 / 301 / mp4" $SUBSLANG -- "$1"
 
 VTT="$(ls ./*$1*.vtt 2>/dev/null)" || true
+MP4="$(ls ./*$1*.mp4)"
 if [[ $VTT != "" ]]; then
-    MP4="$(ls ./*$1*.mp4)"
     ffaddsubs "$MP4" "$VTT"
     rm "$VTT"
 fi
