@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+
+shopt -s nullglob
+
+print_help() {
+    cat <<'EOF'
+
+Usage: gh-workflow-run [-h|--help] [-l] [--shell-completions] [all|workflow ...]
+
+List or update workflow trigger files for the current git repository.
+
+Options:
+  -h, --help           Show this help text and exit.
+  -l                   List available workflows and exit.
+  --shell-completions  Output Bash shell completions and exit.
+
+Arguments:
+  all         Select all available workflows except quick.
+  workflow    One or more workflow names to run.
+
+For each selected workflow, updates .github/workflows/run-<workflow>,
+stages it, and commits with message "Updating workflow triggers".
+
+EOF
+}
+
+fail() {
+    printf '\nError: %s\n' "$1" >&2
+    print_help >&2
+    exit 1
+}
+
+if [ "$#" -eq 0 ]; then
+    fail "No arguments provided."
+fi
+
+for arg in "$@"; do
+    if [ "$arg" = "-h" ] || [ "$arg" = "--help" ]; then
+        print_help
+        exit 0
+    fi
+
+    if [ "$arg" = "--shell-completions" ]; then
+        cat <<'EOF'
+_gh_workflow_run_completions() {
+    local cur
+    local words
+    local workflows
+
+    cur=${COMP_WORDS[COMP_CWORD]}
+    workflows="$("${COMP_WORDS[0]}" -l 2>/dev/null)"
+
+    COMPREPLY=($(compgen -W "all $workflows" -- "$cur"))
+}
+
+complete -F _gh_workflow_run_completions gh-workflow-run
+EOF
+        exit 0
+    fi
+done
+
+current_dir=$(pwd -P)
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || \
+    fail "$current_dir is not inside a Git repository."
+
+cd "$repo_root"
+
+workflows=()
+for workflow_path in .github/workflows/*.yml .github/workflows/*.yaml; do
+    workflow=${workflow_path##*/}
+    workflow=${workflow%.*}
+
+    if [ "$workflow" = "quick" ]; then
+        continue
+    fi
+
+    workflows+=("$workflow")
+done
+
+for arg in "$@"; do
+    if [ "$arg" = "-l" ]; then
+        printf '%s\n' "${workflows[@]}"
+        exit 0
+    fi
+done
+
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+    fail "Repository has uncommitted tracked changes."
+fi
+
+current_branch=$(git branch --show-current)
+if [ -z "$current_branch" ]; then
+    fail "Unable to determine the current branch."
+fi
+
+git fetch --quiet origin || {
+    fail "Failed to fetch from origin."
+}
+
+if git rev-parse --verify --quiet "origin/$current_branch" >/dev/null &&
+   [ "$(git rev-list --count "HEAD..origin/$current_branch")" -gt 0 ]; then
+    fail "Repository is behind origin/$current_branch."
+fi
+
+for arg in "$@"; do
+    if [ "$arg" = "all" ]; then
+        continue
+    fi
+
+    if [ "$arg" = "quick" ]; then
+        fail "quick workflow cannot be run with this script."
+    fi
+
+    found_workflow=0
+    for workflow in "${workflows[@]}"; do
+        if [ "$workflow" = "$arg" ]; then
+            found_workflow=1
+            break
+        fi
+    done
+
+    if [ "$found_workflow" -eq 0 ]; then
+        fail "Unknown workflow: $arg"
+    fi
+done
+
+if [[ " $* " == *" all "* ]]; then
+    args=("${workflows[@]}")
+else
+    args=("$@")
+fi
+
+staged_workflows=0
+
+for arg in "${args[@]}"; do
+    for workflow in "${workflows[@]}"; do
+        if [ "$arg" = "$workflow" ]; then
+            echo "Running $workflow"
+
+            trigger_file=".github/workflows/run-$workflow"
+            printf '%s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" > "$trigger_file" || {
+                fail "Failed to update $trigger_file."
+            }
+            git add "$trigger_file" || {
+                fail "Failed to stage $trigger_file."
+            }
+            staged_workflows=1
+        fi
+    done
+done
+
+if [ "$staged_workflows" -eq 1 ]; then
+    git commit -m "Updating workflow triggers" || {
+        fail "Failed to commit workflow triggers."
+    }
+fi

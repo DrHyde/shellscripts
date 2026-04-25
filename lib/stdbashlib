@@ -7,6 +7,10 @@
 
 no_colour='\e[0m'
 
+function black_on_yellow_text {
+    printf '\e[0;30;43m%s%b' "$*" "$no_colour"
+}
+
 function yellow_text {
     echo -e '\e[0;33m'"$@"$no_colour
 }

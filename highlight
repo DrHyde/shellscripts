@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+
+eval "$(cat "$HOME/bin/lib/stdbashlib")"
+
+help() {
+    cat <<'EOF'
+
+usage: highlight [--colour perl-regex] ... [perl-regex ...]
+
+Read from standard input and write to standard output, highlighting any text
+that matches the supplied Perl regular expressions.
+
+Arguments:
+  perl-regex                  Highlight matches in black on yellow
+  --colour perl-regex         Highlight matches using colour_text from stdbashlib
+  --list-colours              List available colours
+  --shell-completions         Output Bash shell completions and exit
+  -h, --help                  Show this help
+
+Examples:
+  some_command | highlight 'warning|error'
+  some_command | highlight --green 'ok' --red 'fail|error'
+
+Any helper named *_text in lib/stdbashlib can be used by passing its name
+without the _text suffix, for example --black_on_yellow or --green.
+
+EOF
+}
+
+list_colours() {
+    compgen -A function | sed -n 's/_text$//p' | sort
+}
+
+shell_completions() {
+    cat <<'EOF'
+_highlight_completions() {
+    local cur
+    local options
+    local colours
+
+    cur=${COMP_WORDS[COMP_CWORD]}
+    options="$("${COMP_WORDS[0]}" --list-colours 2>/dev/null | sed 's/^/--/')"
+
+    if [[ "$cur" == --* ]]; then
+        COMPREPLY=($(compgen -W "$options" -- "$cur"))
+    else
+        COMPREPLY=()
+    fi
+}
+
+complete -F _highlight_completions highlight
+EOF
+}
+
+error_exit() {
+    printf '\n%s\n' "$1" >&2
+    help >&2
+    exit 1
+}
+
+highlight_template() {
+    local colour="$1"
+    local function_name="${colour}_text"
+
+    if ! declare -F "$function_name" >/dev/null; then
+        error_exit "highlight: no helper function named ${function_name}"
+    fi
+
+    "$function_name" "$PLACEHOLDER"
+}
+
+if [ "$#" -eq 0 ]; then
+    error_exit "highlight: at least one regex is required"
+fi
+
+PLACEHOLDER='__HIGHLIGHT_MATCH__'
+declare -a perl_args=()
+
+while [ "$#" -gt 0 ]; do
+    colour='black_on_yellow'
+
+    if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+        help
+        exit 0
+    fi
+
+    if [ "$1" = "--list-colours" ]; then
+        list_colours
+        exit 0
+    fi
+
+    if [ "$1" = "--shell-completions" ]; then
+        shell_completions
+        exit 0
+    fi
+
+    if [[ "$1" == --* ]]; then
+        colour="${1#--}"
+        shift
+
+        if [ -z "$colour" ]; then
+            error_exit "highlight: colour option cannot be empty"
+        fi
+    fi
+
+    if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+        help
+        exit 0
+    fi
+
+    if [ "$#" -eq 0 ] || [ -z "$1" ]; then
+        error_exit "highlight: missing regex for --${colour}"
+    fi
+
+    template="$(highlight_template "$colour")" || exit 1
+    perl_args+=("$1" "$template")
+    shift
+done
+
+exec env \
+    PLACEHOLDER="$PLACEHOLDER" \
+    perl -pe 'BEGIN {
+        @args = @ARGV;
+        @ARGV = ();
+        $placeholder = $ENV{PLACEHOLDER};
+
+        die "highlight: internal error\n" if @args % 2;
+
+        for (my $i = 0; $i < @args; $i += 2) {
+            push @regex_sources, $args[$i];
+            push @templates, $args[$i + 1];
+        }
+
+        $combined_source = join q{|}, map { "(?<highlight_$_>(?:$regex_sources[$_]))" } 0 .. $#regex_sources;
+        $combined = qr/$combined_source/;
+    }
+    s/($combined)/do {
+        my $match = $&;
+        my $template;
+
+        for my $i (0 .. $#templates) {
+            if (defined $+{"highlight_$i"}) {
+                $template = $templates[$i];
+                last;
+            }
+        }
+
+        (my $highlight = $template) =~ s{\Q$placeholder\E}{$match}g;
+        $highlight;
+    }/ge' \
+    "${perl_args[@]}"
