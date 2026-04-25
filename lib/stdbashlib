@@ -7,24 +7,48 @@
 
 no_colour='\e[0m'
 
+function black_on_red_text {
+    echo -e '\e[0;30;41m'"$@"$no_colour
+}
+function black_on_orange_text {
+    echo -e '\e[0;30;48;5;208m'"$@"$no_colour
+}
 function black_on_yellow_text {
-    printf '\e[0;30;43m%s%b' "$*" "$no_colour"
+    echo -e '\e[0;30;43m'"$@"$no_colour
 }
-
-function yellow_text {
-    echo -e '\e[0;33m'"$@"$no_colour
+function black_on_green_text {
+    echo -e '\e[0;30;42m'"$@"$no_colour
 }
-
-function blue_text {
-    echo -e '\e[1;34m'"$@"$no_colour
+function black_on_blue_text {
+    echo -e '\e[0;30;44m'"$@"$no_colour
 }
-
-function green_text {
-    echo -e '\e[1;32m'"$@"$no_colour
+function black_on_purple_text {
+    echo -e '\e[0;30;45m'"$@"$no_colour
+}
+function black_on_white_text {
+    echo -e '\e[0;30;47m'"$@"$no_colour
 }
 
 function red_text {
     echo -e '\e[1;31m'"$@"$no_colour
+}
+function orange_text {
+    echo -e '\e[38;5;208m'"$@"$no_colour
+}
+function yellow_text {
+    echo -e '\e[0;33m'"$@"$no_colour
+}
+function green_text {
+    echo -e '\e[1;32m'"$@"$no_colour
+}
+function blue_text {
+    echo -e '\e[1;34m'"$@"$no_colour
+}
+function purple_text {
+    echo -e '\e[1;35m'"$@"$no_colour
+}
+function white_text {
+    echo -e '\e[1;37m'"$@"$no_colour
 }
 
 function script_dir (
