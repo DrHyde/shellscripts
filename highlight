@@ -96,16 +96,11 @@ while [ "$#" -gt 0 ]; do
 
     if [[ "$1" == --* ]]; then
         colour="${1#--}"
-        shift
-
         if [ -z "$colour" ]; then
             error_exit "highlight: colour option cannot be empty"
         fi
-    fi
 
-    if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-        help
-        exit 0
+        shift
     fi
 
     if [ "$#" -eq 0 ] || [ -z "$1" ]; then
