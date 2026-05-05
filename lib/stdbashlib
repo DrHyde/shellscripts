@@ -29,10 +29,10 @@ white            1;37
 EOF
 unset function_name colour_code
 
-function script_dir (
-    cd -- "$(dirname -- "${BASH_SOURCE[0]}")" > /dev/null 2>&1
+function script_dir {
+    ( cd -- "$(dirname -- "${BASH_SOURCE[0]}")" > /dev/null 2>&1 )
     pwd
-)
+}
 
 function start_timer {
     timer_start_time=$(date +%s)
