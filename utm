@@ -56,9 +56,10 @@ compress() (
     done
 )
 
-backup() (
+backup () (
     local started="$( list started | grep ^ )"
     local up="$( list up | grep ^ )"
+
     if [ -z "$started" ] && [ -z "$up" ]; then
         echo Backing up
         cd "/Volumes/VaultBackup/snapshots/daily.0/UTM VMs" && \
@@ -73,100 +74,73 @@ backup() (
 )
 
 bounce () (
+    _execute_verb_with_arg bounce listup "$@"
+)
+
+_do_bounce () (
     MACHINE="$1"
-    shift
-    if [ "$MACHINE" == "all" ]; then
-        for candidate in  $( list up ); do
-            bounce "$candidate"
-        done
-    elif [ -z "$MACHINE" ]; then                     # no args? error
-        echo utm bounce all\|\{list of machines\}
-    elif [ ! -z "$1" ]; then                         # multi? iterate
-        for candidate in "$MACHINE" "$@"; do
-            bounce "$candidate"
-        done
-    elif [[ "$MACHINE" == *\** ]]; then              # wildcard? match and iterate
-        for candidate in $( list up ); do
-            if [[ "$candidate" == $MACHINE ]]; then
-                bounce "$candidate"
-            fi
-        done
-    else
-        if grep "^$MACHINE\$" <( list up ) >/dev/null 2>/dev/null ; then
-            stop "$MACHINE"
-            while grep "^$MACHINE$" <( list started ) >/dev/null 2>&1; do
-                sleep 5
-                echo ... waiting
-            done
-            sleep 5
-            start "$MACHINE"
-        else
-            echo What\'s $MACHINE?
-        fi
-    fi
+    stop "$MACHINE"
+    while grep "^$MACHINE$" <( list started ) >/dev/null 2>&1; do
+        sleep 5
+        echo ... waiting
+    done
+    sleep 5
+    start "$MACHINE"
 )
 
 stop () (
+    _execute_verb_with_arg stop listup "$@"
+)
+
+_do_stop () (
     MACHINE="$1"
-    shift
-    if [ "$MACHINE" == "all" ]; then
-        for candidate in  $( list up ); do
-            stop "$candidate"
-        done
-    elif [ -z "$MACHINE" ]; then
-        echo utm stop all\|\{list of machines\}
-    elif [ ! -z "$1" ]; then
-        for candidate in "$MACHINE" "$@"; do
-            stop "$candidate"
-        done
-    elif [[ "$MACHINE" == *\** ]]; then
-        for candidate in $( list up ); do
-            if [[ "$candidate" == $MACHINE ]]; then
-                stop "$candidate"
-            fi
-        done
-    else
-        if grep "^$MACHINE\$" <( list up ) >/dev/null 2>/dev/null ; then
-            echo stopping $MACHINE
-            utmctl stop "$MACHINE" --request >/dev/null 2>/dev/null
-            sleep 5
-        else
-            echo What\'s $MACHINE?
-        fi
-    fi
+    echo stopping $MACHINE
+    utmctl stop "$MACHINE" --request >/dev/null 2>/dev/null
+    sleep 5
 )
 
 start () (
+    _execute_verb_with_arg start liststopped "$@"
+)
+
+_do_start () (
+    MACHINE="$1"
+    echo starting $MACHINE
+    utmctl start $MACHINE >/dev/null 2>/dev/null
+    while ! _pingvm "$MACHINE"; do
+        echo ... waiting
+        sleep 5
+    done
+)
+
+_execute_verb_with_arg () (
+    ORIGINAL_VERB="$1"
+    shift
+    LIST_FUNCTION="$1"
+    shift
+
     MACHINE="$1"
     shift
     if [ "$MACHINE" == "all" ]; then
-        for candidate in  $( list stopped ); do
-            start "$candidate"
+        for candidate in  $( "$LIST_FUNCTION" ); do
+            "$ORIGINAL_VERB" "$candidate"
         done
     elif [ -z "$MACHINE" ]; then
-        echo utm start all\|\{list of machines\}
+        echo utm "$ORIGINAL_VERB" all\|\{list of machines\}
     elif [ ! -z "$1" ]; then                         # multi? iterate
         for candidate in "$MACHINE" "$@"; do
-            start "$candidate"
+            "$ORIGINAL_VERB" "$candidate"
         done
     elif [[ "$MACHINE" == *\** ]]; then
-        for candidate in $( list stopped ); do
+        for candidate in $( "$LIST_FUNCTION" ); do
             if [[ "$candidate" == $MACHINE ]]; then
-                start "$candidate"
+                "$ORIGINAL_VERB" "$candidate"
             fi
         done
+    elif grep "^$MACHINE\$" <( "$LIST_FUNCTION" ) >/dev/null 2>/dev/null ; then
+        "_do_$ORIGINAL_VERB" "$MACHINE"
     else
-        if grep "^$MACHINE\$" <( list stopped ) >/dev/null 2>/dev/null ; then
-            echo starting $MACHINE
-            utmctl start $MACHINE >/dev/null 2>/dev/null
-            ALTERNATE_NAME="$(echo $MACHINE|sed 's/.local$//')"
-            while ! (ping -c1 "$MACHINE" || ping -c1 "$ALTERNATE_NAME" ) >/dev/null 2>&1; do
-                echo ... waiting
-                sleep 5
-            done
-        else
-            echo What\'s $MACHINE?
-        fi
+        echo What\'s $MACHINE?
     fi
 )
 
@@ -204,9 +178,19 @@ liststarted () (
 
 listup () (
     for candidate in $( liststarted ); do
-        ALTERNATE_NAME="$(echo $candidate|sed 's/.local$//')"
-        (ping -c1 "$candidate" || ping -c1 "$ALTERNATE_NAME" ) >/dev/null 2>&1 && echo $candidate
+        _pingvm "$candidate" && echo $candidate
     done
+)
+
+_pingvm () (
+    VM="$1"
+    ALTERNATE_NAME="$(echo "$VM"|sed 's/.local$//')"
+    (ping -c1 "$VM" || ping -c1 "$ALTERNATE_NAME" ) >/dev/null 2>&1 && return 0
+    return 1
+)
+
+liststopped () (
+    grep -v -f <( liststarted ) <( listall )
 )
 
 list () (
@@ -219,7 +203,7 @@ list () (
     elif [ "$TYPE" == "up" ]; then
         listup
     elif [ "$TYPE" == "stopped" ]; then
-        grep -v -f <( liststarted ) <( listall )
+        liststopped
     else
         echo utm list all\|started\|up\|stopped
     fi
