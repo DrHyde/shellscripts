@@ -125,22 +125,69 @@ exec env \
             push @regex_sources, $args[$i];
             push @templates, $args[$i + 1];
         }
+        @regexes = map { qr/(?:$_)/ } @regex_sources;
 
-        $combined_source = join q{|}, map { "(?<highlight_$_>(?:$regex_sources[$_]))" } 0 .. $#regex_sources;
-        $combined = qr/$combined_source/;
-    }
-    s/($combined)/do {
-        my $match = $&;
-        my $template;
+        sub update_state {
+            my ($state_ref, $escape) = @_;
 
-        for my $i (0 .. $#templates) {
-            if (defined $+{"highlight_$i"}) {
-                $template = $templates[$i];
-                last;
+            $escape =~ /\e\[(.*?)m/;
+            my $params = $1;
+            $params = "0" if $params eq q{};
+
+            if ($params =~ /(?:^|;)0(?:;|$)/) {
+                $$state_ref = q{};
+                return;
             }
+
+            $$state_ref .= $escape;
         }
 
-        (my $highlight = $template) =~ s{\Q$placeholder\E}{$match}g;
-        $highlight;
-    }/ge' \
+        sub highlight_visible_text {
+            my ($raw, $regex, $template) = @_;
+            my @boundaries;
+            my @states;
+            my $visible = q{};
+            my $state = q{};
+
+            pos($raw) = 0;
+            while (pos($raw) < length($raw)) {
+                if ($raw =~ /\G(\e\[[0-9;]*m)/gc) {
+                    update_state(\$state, $1);
+                    next;
+                }
+
+                $boundaries[length $visible] = pos($raw);
+                $states[length $visible] = $state;
+                $raw =~ /\G(.)/gcs or last;
+                $visible .= $1;
+            }
+
+            $boundaries[length $visible] = length($raw);
+            $states[length $visible] = $state;
+
+            my $output = q{};
+            my $raw_cursor = 0;
+
+            pos($visible) = 0;
+            while ($visible =~ /$regex/g) {
+                my $start = $-[0];
+                my $end = $+[0];
+
+                $output .= substr($raw, $raw_cursor, $boundaries[$start] - $raw_cursor);
+
+                my $match = substr($visible, $start, $end - $start);
+                (my $highlight = $template) =~ s{\Q$placeholder\E}{$match}g;
+                $output .= $highlight;
+                $output .= $states[$end] if defined $states[$end] && length $states[$end];
+
+                $raw_cursor = $boundaries[$end];
+            }
+
+            $output .= substr($raw, $raw_cursor);
+            return $output;
+        }
+    }
+    for my $i (0 .. $#regexes) {
+        $_ = highlight_visible_text($_, $regexes[$i], $templates[$i]);
+    }' \
     "${perl_args[@]}"
