@@ -19,7 +19,7 @@ main () (
     elif [ "$VERB" == "compress" ]; then
         compress "$@"
     elif [ "$VERB" == "backup" ]; then
-        backup"$@"
+        backup "$@"
     else
         echo vbox list\|start\|stop\|bounce
     fi
@@ -47,9 +47,10 @@ compress() (
     done
 )
 
-backup() (
+backup () (
     local started="$( list started | grep ^ )"
     local up="$( list up | grep ^ )"
+
     if [ -z "$started" ] && [ -z "$up" ]; then
         echo Backing up
         cd "/Volumes/VaultBackup/snapshots/daily.0/VirtualBox VMs" && \
@@ -64,101 +65,86 @@ backup() (
 )
 
 bounce () (
+    _execute_verb_with_arg bounce listup "$@"
+)
+
+_do_bounce () (
     MACHINE="$1"
-    shift
-    if [ "$MACHINE" == "all" ]; then
-        for candidate in  $( list up ); do
-            bounce "$candidate"
-        done
-    elif [ "$MACHINE" == "GCA-XP" ]; then
-        echo no, not bouncing $MACHINE
-    elif [ -z "$MACHINE" ]; then                        # no args? error
-        echo vbox bounce all\|\{list of machines\}
-    elif [ ! -z "$1" ]; then                            # multi? iterate
-        for candidate in "$MACHINE" "$@"; do
-            bounce "$candidate"
-        done
-    elif [[ "$MACHINE" == *\** ]]; then                 # wildcard? match and iterate
-        for candidate in $( list up ); do
-            if [[ "$candidate" == $MACHINE ]]; then
-                bounce "$candidate"
-            fi
-        done
-    else
-        if grep ^$MACHINE\$ <( list up ) >/dev/null 2>/dev/null ; then
-            stop "$MACHINE"
-            while grep "^$MACHINE$" <( list started ) >/dev/null 2>&1; do
-                sleep 5
-                echo ... waiting
-            done
-            sleep 5
-            start "$MACHINE"
-        else
-            echo What\'s $MACHINE?
-        fi
-    fi
+    stop "$MACHINE"
+    while grep "^$MACHINE$" <( list started ) >/dev/null 2>&1; do
+        sleep 5
+        echo ... waiting
+    done
+    sleep 5
+    start "$MACHINE"
 )
 
 stop () (
+    _execute_verb_with_arg stop listup "$@"
+)
+
+_do_stop () (
     MACHINE="$1"
-    shift
-    if [ "$MACHINE" == "all" ]; then
-        for candidate in  $( list up ); do
-            stop "$candidate"
-        done
-    elif [ "$MACHINE" == "GCA-XP" ]; then
-        echo no, not stopping $MACHINE
-    elif [ -z "$MACHINE" ]; then
-        echo vbox stop all\|\{list of machines\}
-    elif [ ! -z "$1" ]; then
-        for candidate in "$MACHINE" "$@"; do
-            stop "$candidate"
-        done
-    elif [[ "$MACHINE" == *\** ]]; then
-        for candidate in $( list up ); do
-            if [[ "$candidate" == $MACHINE ]]; then
-                stop "$candidate"
-            fi
-        done
-    else
-        if grep ^$MACHINE\$ <( list up ) >/dev/null 2>/dev/null ; then
-            echo stopping $MACHINE
-            VBoxManage controlvm "$MACHINE" acpipowerbutton >/dev/null 2>/dev/null
-        else
-            echo What\'s $MACHINE?
-        fi
-    fi
+    echo stopping $MACHINE
+    VBoxManage controlvm "$MACHINE" acpipowerbutton >/dev/null 2>/dev/null
 )
 
 start () (
+    _execute_verb_with_arg start liststopped "$@"
+)
+
+_do_start () (
+    MACHINE="$1"
+    echo starting $MACHINE
+    VBoxManage startvm "$MACHINE" >/dev/null 2>/dev/null
+)
+
+_execute_verb_with_arg () (
+    ORIGINAL_VERB="$1"
+    shift
+    LIST_FUNCTION="$1"
+    shift
+
     MACHINE="$1"
     shift
     if [ "$MACHINE" == "all" ]; then
-        for candidate in  $( list stopped ); do
-            start "$candidate"
+        for candidate in  $( "$LIST_FUNCTION" ); do
+            "$ORIGINAL_VERB" "$candidate"
         done
-    elif [ "$MACHINE" == "GCA-XP" ]; then
-        echo no, not starting $MACHINE
     elif [ -z "$MACHINE" ]; then
-        echo vbox start all\|\{list of machines\}
+        echo vbox "$ORIGINAL_VERB" all\|\{list of machines\}
     elif [ ! -z "$1" ]; then
         for candidate in "$MACHINE" "$@"; do
-            start "$candidate"
+            "$ORIGINAL_VERB" "$candidate"
         done
     elif [[ "$MACHINE" == *\** ]]; then
-        for candidate in $( list stopped ); do
+        for candidate in $( "$LIST_FUNCTION" ); do
             if [[ "$candidate" == $MACHINE ]]; then
-                start "$candidate"
+                "$ORIGINAL_VERB" "$candidate"
             fi
         done
+    elif _is_protected_vm "$MACHINE"; then
+        _protected_vm_message "$ORIGINAL_VERB" "$MACHINE"
+    elif grep "^$MACHINE\$" <( "$LIST_FUNCTION" ) >/dev/null 2>/dev/null ; then
+        "_do_$ORIGINAL_VERB" "$MACHINE"
     else
-        if grep ^$MACHINE\$ <( list stopped ) >/dev/null 2>/dev/null ; then
-            echo starting $MACHINE
-            VBoxManage startvm $MACHINE >/dev/null 2>/dev/null
-        else
-            echo What\'s $MACHINE?
-        fi
+        echo What\'s $MACHINE?
     fi
+)
+
+_is_protected_vm () (
+    [ "$1" == "GCA-XP" ]
+)
+
+_protected_vm_message () (
+    VERB="$1"
+    MACHINE="$2"
+
+    case "$VERB" in
+        bounce) echo no, not bouncing $MACHINE ;;
+        start) echo no, not starting $MACHINE ;;
+        stop) echo no, not stopping $MACHINE ;;
+    esac
 )
 
 status () (
@@ -191,8 +177,12 @@ liststarted () (
 
 listup () (
     for candidate in $( liststarted ); do
-        ping -c1 $candidate >/dev/null 2>/dev/null && echo $candidate
+        ping -c1 "$candidate" >/dev/null 2>/dev/null && echo $candidate
     done
+)
+
+liststopped () (
+    grep -v -f <( liststarted ) <( listall )
 )
 
 list () (
@@ -205,7 +195,7 @@ list () (
     elif [ "$TYPE" == "up" ]; then
         listup
     elif [ "$TYPE" == "stopped" ]; then
-        grep -v -f <( liststarted ) <( listall )
+        liststopped
     else
         echo vbox list all\|started\|up\|stopped
     fi
