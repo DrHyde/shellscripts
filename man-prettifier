@@ -1,3 +1,8 @@
 #!/usr/bin/env sh
 
-col -bx|sh -c 'bat -l man -p'
+if [ -n "$1" ]; then
+    # OpenBSD passes a filename
+    cat "$1" | col -bx|bat -l man -p
+else
+    col -bx|bat -l man -p
+fi
