@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+
+if [ -n "$2" ]; then
+    (
+        echo "Only one argument allowed"
+        echo
+        "$0" -h
+    ) > /dev/stderr
+    exit 1
+elif [ -n "$1" ]; then
+    if [ "$1" = "-h" ]; then
+        echo "weather [location]"
+        echo
+        echo "Talk to wttr.in to get a weather forecast."
+        echo
+        echo "The location must be a single word, multiple words can be joined with"
+        echo "a + sign because web stuff."
+        echo
+        echo "The default location is Thornton Heath. To use whatever GeoIP thinks"
+        echo "is your location, ask for @here."
+        echo
+        exit 0;
+    fi
+    if [ "$1" = "@here" ]; then
+        location=
+    else
+        location="$1"
+    fi
+else
+    location="Thornton+Heath"
+fi
+
+curl -s "v2.wttr.in/$location"
