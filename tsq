@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+export TS_SOCKET="$TMPDIR/socket-ts.$(id -u)"
+
+if [ "$1" == "--queue" ]; then
+    export TS_SOCKET="$TMPDIR/socket-ts.$2.$(id -u)"
+    shift
+    shift
+fi
+
+ts "$@"
