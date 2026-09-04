@@ -3,7 +3,7 @@
 shopt -s nullglob
 
 print_help() {
-    cat <<'EOF'
+    cat <<EOF
 
 Usage: gh-workflow-run [-h|--help] [-l] [--shell-completions] [all|workflow ...]
 
@@ -19,7 +19,7 @@ Arguments:
   workflow    One or more workflow names to run.
 
 For each selected workflow, updates .github/workflows/run-<workflow>,
-stages it, and commits with message "Updating workflow triggers".
+stages it, and commits with message "Updating workflow triggers (done by: $0)".
 
 EOF
 }
@@ -150,7 +150,7 @@ for arg in "${args[@]}"; do
 done
 
 if [ "$staged_workflows" -eq 1 ]; then
-    git commit -m "Updating workflow triggers" || {
+    git commit -m "Updating workflow triggers (done by: $0)" || {
         fail "Failed to commit workflow triggers."
     }
 fi
