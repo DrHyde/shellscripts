@@ -55,8 +55,14 @@ backup () (
 
     if [ -z "$started" ] && [ -z "$up" ]; then
         echo Backing up
-        cd "/Volumes/VaultBackup/snapshots/daily.0/VirtualBox VMs" && \
-        rsync -Pavessh --delete ~/VirtualBox?VMs/ .
+        if [ "$(uname)" == "Darwin" ]; then
+            cd "/Volumes/VaultBackup/snapshots/daily.0/VirtualBox VMs" && \
+            rsync -Pavessh --delete ~/VirtualBox?VMs/ .
+        else
+            mkdir "$HOME/VirtualBox VMs backup" 2>/dev/null
+            cd "$HOME/VirtualBox VMs backup" && \
+            rsync -Pavessh --delete ~/VirtualBox?VMs/ .
+        fi
     else
         echo Can\'t backup, some machines are still running:
         (
