@@ -12,6 +12,8 @@ main () (
         start "$@"
     elif [ "$VERB" == "stop" ]; then
         stop "$@"
+    elif [ "$VERB" == "detach" ]; then
+        detach "$@"
     elif [ "$VERB" == "status" ]; then
         status "$@"
     elif [ "$VERB" == "bounce" ]; then
@@ -21,7 +23,7 @@ main () (
     elif [ "$VERB" == "backup" ]; then
         backup "$@"
     else
-        echo vbox list\|start\|stop\|bounce
+        echo vbox list\|start\|stop\|bounce\|detach
     fi
 )
 
@@ -96,7 +98,20 @@ start () (
 _do_start () (
     MACHINE="$1"
     echo starting $MACHINE
-    VBoxManage startvm "$MACHINE" >/dev/null 2>/dev/null
+    VBoxManage startvm --type=headless "$MACHINE" >/dev/null 2>/dev/null
+)
+
+detach () (
+    _execute_verb_with_arg detach listup "$@"
+)
+
+_do_detach () (
+    MACHINE="$1"
+    echo detaching $MACHINE
+    (
+        VBoxManage controlvm "$MACHINE" savestate && \
+        _do_start "$MACHINE"
+    ) >/dev/null 2>/dev/null
 )
 
 _execute_verb_with_arg () (
