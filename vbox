@@ -2,7 +2,9 @@
 
 eval "$(cat $HOME/bin/lib/stdbashlib)"
 
-if [ ! -z "$VBOX_REMOTE_COMMAND" ]; then
+if [ "$1" == "local" ]; then
+    shift
+elif [ ! -z "$VBOX_REMOTE_COMMAND" ]; then
     $VBOX_REMOTE_COMMAND "$@"
     exit
 fi
@@ -29,6 +31,9 @@ main () (
         backup "$@"
     else
         echo vbox list\|start\|stop\|bounce\|detach
+        echo
+        echo will reach out to vbox on another host if VBOX_REMOTE_COMMAND is set.
+        echo to prevent that, use 'vbox local ...'
     fi
 )
 
