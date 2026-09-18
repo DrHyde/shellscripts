@@ -2,6 +2,11 @@
 
 eval "$(cat $HOME/bin/lib/stdbashlib)"
 
+if [ ! -z "$VBOX_REMOTE_COMMAND" ]; then
+    $VBOX_REMOTE_COMMAND "$@"
+    exit
+fi
+
 main () (
     VERB="$1"
     shift
