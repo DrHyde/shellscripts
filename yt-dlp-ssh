@@ -39,6 +39,7 @@ function main {
   disown
   trap ctrl_c INT
 
+  sleep 1
   yt-dlp --proxy "socks5://localhost:$port" "$@"
   kill $ssh_pid
 }
