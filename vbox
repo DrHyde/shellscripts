@@ -104,7 +104,12 @@ stop () (
 _do_stop () (
     MACHINE="$1"
     echo stopping $MACHINE
-    VBoxManage controlvm "$MACHINE" acpipowerbutton >/dev/null 2>/dev/null
+    if _suspend_dont_stop "$MACHINE"; then
+        echo "  going to suspend, not stop"
+        VBoxManage controlvm "$MACHINE" savestate >/dev/null 2>/dev/null
+    else
+        VBoxManage controlvm "$MACHINE" acpipowerbutton >/dev/null 2>/dev/null
+    fi
 )
 
 start () (
@@ -163,8 +168,12 @@ _execute_verb_with_arg () (
     fi
 )
 
+_suspend_dont_stop () (
+    [ "$1" == "GCA-XP.local" ]
+)
+
 _is_protected_vm () (
-    [ "$1" == "GCA-XP" ]
+    [ "$1" == "none currently protected" ]
 )
 
 _protected_vm_message () (
