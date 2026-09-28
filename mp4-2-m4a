@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+for file in "$@"; do
+    (
+        ffprobe "$file" 2>&1|grep -q "Audio: aac" &&
+        ffverify -q "$file"  &&
+        ffmpeg -v error -i "$file" -vn -acodec copy "$file.m4a" &&
+        touch -r "$file" "$file.m4a" &&
+        rm "$file"
+    ) || echo "... $file doesn't look like an m4a"
+done
