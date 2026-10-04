@@ -225,6 +225,35 @@ liststopped () (
     grep -v -f <( liststarted ) <( listall )
 )
 
+listheadless () (
+    # a bit complex, because if a machine is started headless but then gains a head
+    # it will have both a VBoxHeadless and a VirtualBoxVM process. So we check if it
+    # has the former but *not* the latter.
+    #
+    # To test:
+    #   start no VMs,        run headed ✅ headless ✅
+    #   start a VM headless, run headed ✅ headless ✅
+    #   attach a head,       run headed ✅ headless ✅
+    #   detach the head,     run headed ✅ headless ✅
+    #   stop the machine,    run headed ✅ headless ✅
+    #   start with a head,   run headed ✅ headless ✅
+    #   detach the head,     run headed ✅ headless ✅
+    #   attach a head,       run headed ✅ headless ✅
+    #   stop the machine,    run headed ✅ headless ✅
+    #
+    for might_be_headless in $(
+        for candidate in $( liststarted ); do
+            ps aux|grep VBoxHeadless|grep -q "$candidate" && echo $candidate
+        done
+    ); do
+        ps aux|grep VirtualBoxVM|grep -q "$might_be_headless" || echo $might_be_headless
+    done
+)
+
+listheaded () (
+    grep -v -f <( listheadless ) <( liststarted )
+)
+
 list () (
     TYPE="$1"
     shift
@@ -236,8 +265,12 @@ list () (
         listup
     elif [ "$TYPE" == "stopped" ]; then
         liststopped
+    elif [ "$TYPE" == "headed" ]; then
+        listheaded
+    elif [ "$TYPE" == "headless" ]; then
+        listheadless
     else
-        echo vbox list all\|started\|up\|stopped
+        echo vbox list all\|started\|up\|stopped\|headed\|headless
     fi
 )
 
