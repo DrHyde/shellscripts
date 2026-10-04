@@ -19,6 +19,8 @@ main () (
         start "$@"
     elif [ "$VERB" == "stop" ]; then
         stop "$@"
+    elif [ "$VERB" == "attach" ]; then
+        attach "$@"
     elif [ "$VERB" == "detach" ]; then
         detach "$@"
     elif [ "$VERB" == "status" ]; then
@@ -30,7 +32,7 @@ main () (
     elif [ "$VERB" == "backup" ]; then
         backup "$@"
     else
-        echo vbox list\|start\|stop\|bounce\|detach
+        echo vbox list\|start\|stop\|bounce\|attach\|detach
         echo
         echo will reach out to vbox on another host if VBOX_REMOTE_COMMAND is set.
         echo to prevent that, use 'vbox local ...'
@@ -123,15 +125,32 @@ _do_start () (
 )
 
 detach () (
-    _execute_verb_with_arg detach listup "$@"
+    _execute_verb_with_arg detach listheaded "$@"
 )
 
 _do_detach () (
     MACHINE="$1"
     echo detaching $MACHINE
     (
-        VBoxManage controlvm "$MACHINE" savestate && \
+        VBoxManage controlvm "$MACHINE" savestate
+        # need to wait a bit for VBox to settle
+        sleep 5
         _do_start "$MACHINE"
+        # need to wait a bit for network interfaces to finish coming up
+        sleep 5
+    ) >/dev/null 2>/dev/null
+)
+
+attach () (
+    _execute_verb_with_arg attach listheadless "$@"
+)
+
+_do_attach () (
+    MACHINE="$1"
+    echo attching $MACHINE
+    (
+        VBoxManage controlvm "$MACHINE" savestate && \
+        VBoxManage startvm "$MACHINE" >/dev/null 2>/dev/null
     ) >/dev/null 2>/dev/null
 )
 
