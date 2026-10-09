@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -eu -o pipefail
+
+i_am="$(basename "$(which "$0")")"
+select_stream=""
+
+if [[ "$i_am" == "ffhasaudio" ]]; then
+    select_stream=a
+elif [[ "$i_am" == "ffhasvideo" ]]; then
+    select_stream=v
+elif [[ "$i_am" == "ffhassubs" ]]; then
+    select_stream=s
+fi
+
+if [[ "$select_stream" == "" ]]; then
+    (
+        echo
+        echo ffhasstream should be invoked as ffhasaudio, ffhasvideo,
+        echo or ffhassubs. It will exit with true or false as appropriate.
+        echo
+    ) >&2
+    exit 1
+fi
+
+ffprobe -show_streams -select_streams $select_stream -loglevel error -i "$1"|grep -q .
