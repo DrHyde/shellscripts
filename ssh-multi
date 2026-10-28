@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+if [ "$TERM_PROGRAM" != "iTerm.app" ]; then
+    echo "This script must be run inside iTerm"
+    exit 1
+fi
+
+for server in "$@"; do
+    if ping -c 1 "$server" >/dev/null 2>&1; then
+        osascript -e "tell application \"iTerm\" to tell current window to create tab with default profile" \
+                  -e "tell application \"iTerm\" to tell current session of current window to write text \"ssh $server;exit\""
+    else
+        echo "What's $server?"
+    fi
+done
+
