@@ -5,10 +5,43 @@ if [ "$TERM_PROGRAM" != "iTerm.app" ]; then
     exit 1
 fi
 
-for server in "$@"; do
+hosts=()
+command=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -m)
+            shift
+            while [[ $# -gt 0 && "$1" != -* ]]; do
+                hosts+=("$1")
+                shift
+            done
+            ;;
+        -c)
+            command="$2"
+            shift 2
+            ;;
+        *)
+            echo "Usage: $0 -m <host1> <host2> ... [-c <command>]" >&2
+            exit 1
+            ;;
+    esac
+done
+
+if [ ${#hosts[@]} -eq 0 ]; then
+    echo "Usage: $0 -m <host1> <host2> ... [-c <command>]" >&2
+    exit 1
+fi
+
+for server in "${hosts[@]}"; do
     if ping -c 1 "$server" >/dev/null 2>&1; then
-        osascript -e "tell application \"iTerm\" to tell current window to create tab with default profile" \
-                  -e "tell application \"iTerm\" to tell current session of current window to write text \"ssh $server;exit\""
+        if [ -n "$command" ]; then
+            osascript -e "tell application \"iTerm\" to tell current window to create tab with default profile" \
+                      -e "tell application \"iTerm\" to tell current session of current window to write text \"ssh $server '$command';exit\""
+        else
+            osascript -e "tell application \"iTerm\" to tell current window to create tab with default profile" \
+                      -e "tell application \"iTerm\" to tell current session of current window to write text \"ssh $server;exit\""
+        fi
     else
         echo "What's $server?"
     fi
